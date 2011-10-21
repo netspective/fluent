@@ -1,0 +1,17 @@
+module com {
+	module netspective {
+		module medigy {
+			struct BloodPressure {
+				string deviceDomain;
+				string deviceID;
+				long timeOfMeasurement;
+				short systolicPressure;
+				short diastolicPressure;
+				short pulseRatePerMinute;
+
+			};
+			#pragma keylist BloodPressure
+
+		};
+	};
+};
