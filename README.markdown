@@ -36,22 +36,23 @@ http://www.prismtech.com/opensplice/opensplice-dds-community/software-downloads
 
 download the OpenSpliceDDSV5.4.1-x86_64.linux2.6-gcc412-gnuc25-HDE.tar.gz from the above link.
 
-# tar xf OpenSpliceDDSV5.4.1-x86_64.linux2.6-gcc412-gnuc25-HDE.tar.gz
+$ tar xf OpenSpliceDDSV5.4.1-x86_64.linux2.6-gcc412-gnuc25-HDE.tar.gz
 
 Just Extract the downloaded tar file with above command, After extracted the tar file you can find the HDE folder.
 
-#source release.com
+$ source release.com
+
 Use the above command to source the path to run the OpenSplice.
 
-# ospl start
+$ ospl start
 
 BOOST LIBRARY
 ------------
 
 Boost libraries are intended to be widely useful, and usable across a broad spectrum of applications. 
 
-#apt-get install libboost-date-time-dev  libboost-dev libboost-doc libboost-filesystem-dev libboost-graph-dev \
-libboost-iostreams-dev libboost-program-options-dev libboost-python-dev libboost-regex-dev \
+$ apt-get install libboost-date-time-dev  libboost-dev libboost-doc libboost-filesystem-dev libboost-graph-dev 
+libboost-iostreams-dev libboost-program-options-dev libboost-python-dev libboost-regex-dev 
 libboost-signals-dev libboost-test-dev libboost-thread-dev
 
 
@@ -67,25 +68,30 @@ Downloaded the SimD from http://code.google.com/p/simd-cxx/ - latest version.
 
 The following packages are required to complie the SimD:
 
-#tar xf simd-cxx<version>.tar.gz
-#cd simd-cxx<version<.tar.gz
-#mkdir build
-#cd build
-#cmake -DCMAKE_INSTALL_PREFIX=$SIMD_INSTALL_DIR ..
-#make install
+$ tar xf simd-cxx<version>.tar.gz
+
+$ cd simd-cxx<version<.tar.gz
+
+$ mkdir build
+
+$ cd build
+
+$ cmake -DCMAKE_INSTALL_PREFIX=$SIMD_INSTALL_DIR ..
+
+$ make install
 
 CMAKE 
 -------
 Cmake is used to software compilation using simple platform and makes native makefiles and workspaces 
 that can be used in the compiler evnvironment.
 
-#apt-get install cmake
+$ apt-get install cmake
 
 Development Libraries
 ---------------------
 GCC is an integrated distribution of compilers for several major programming languages.
 
-#apt-get install build-essential
+$ apt-get install build-essential
 
 
 COMPILATION STEPS
@@ -95,37 +101,51 @@ This package contains the following files:
 
 support/build/Makefile
 src/c++/production/app/data-generator.cpp
+
 src/c++/production/app/command-controller.cpp
+
 src/c++/production/app/bp/bloodPressure-pub.cpp
+
 src/c++/production/app/bp/bloodPressure-echo.cpp
+
 src/c++/production/app/bp/bloodPressure-persist.cpp
+
 src/idl/bp.idl
 
 To build, do the following
 
 Include the OpenSliceDDS environment variables.
 The path depends on where you installed it.
-# . /usr/local/HDE/x86.linux2.6/release.com
+
+$ . /usr/local/HDE/x86.linux2.6/release.com
 
 Export the directory where you installed SIMD
-# export SIMD_INSTALL_DIR=/usr/local/simd
+
+$ export SIMD_INSTALL_DIR=/usr/local/simd
 
 This directory should include the header and library files
 /usr/local/simd/include/dds/dds.hpp
 /usr/local/simd/lib/libSimD.so
 
 Run the makefile
-# cd support/build
-# make
+
+$ cd support/build
+
+$ make
 
 This will create four programs:
+
 src/c++/production/app/bp/bp-pub
+
 src/c++/production/app/bp/bp-sub
+
 src/c++/production/app/data-generator
+
 src/c++/production/app/command-controller
 
 To clean all the generated files run
-# make clean
+
+$ make clean
 
 
 
