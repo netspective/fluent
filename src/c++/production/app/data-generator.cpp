@@ -10,7 +10,9 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
-
+#include <pthread.h>
+//#include <iostream>
+#include <unistd.h>
 int main()
 {
 	int sock, connected, bytes_recieved , flag = 1;  
@@ -20,6 +22,8 @@ int main()
 	socklen_t sin_size;
 	int i=1;
 	int sys, dias, pulse;
+	int spo2, pulseox;
+	int temp_monitor;
 
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		perror("Socket");
@@ -81,12 +85,12 @@ int main()
 					strcat(send_data,":");
 					strcat(send_data,temp);
 	
-					dias = rand()%40+65;
+					dias = rand()%40+55;
 					sprintf(temp, "%d", dias);
 					strcat(send_data,":");
 					strcat(send_data,temp);
 
-					pulse = rand()%40+65;
+					pulse = rand()%40+55;
 					sprintf(temp, "%d", pulse);
 					strcat(send_data,":");
 					strcat(send_data,temp);
@@ -98,7 +102,62 @@ int main()
 					strcpy(send_data,"");
 				}
 			}
+			else if(strcmp(recv_data , "PULSEOX") == 0 )
+			{
+				while (i<=10) {
+
+                                        printf("\nSend %d",i);
+                                        sprintf(temp, "%d", time(0));
+                                        strcat(send_data,temp);
+
+                                        spo2 = rand()%30+70;
+                                        sprintf(temp, "%d", spo2);
+                                        strcat(send_data,":");
+                                        strcat(send_data,temp);
+
+
+                                        pulseox = rand()%40+55;
+                                        sprintf(temp, "%d", pulseox);
+                                        strcat(send_data,":");
+                                        strcat(send_data,temp);
+
+                                        send(connected, send_data,strlen(send_data), 0);
+                                        sleep(1);
+                                        fflush(stdout);
+                                        i++;
+                                        strcpy(send_data,"");
+                                }
+			}
+			else if(strcmp(recv_data , "TEMPMONITOR") == 0 ) 
+			{
+					while (i<=10) {
+
+                                        printf("\nSend %d",i);
+                                        sprintf(temp, "%d", time(0));
+                                        strcat(send_data,temp);
+                            
+			                temp_monitor = rand()%60+50;
+                                        sprintf(temp, "%d", temp_monitor);
+                                        strcat(send_data,":");
+                                        strcat(send_data,temp);
+
+                                        send(connected, send_data,strlen(send_data), 0);
+                                        sleep(1);
+                                        fflush(stdout);
+                                        i++;
+                                        strcpy(send_data,"");
+                                }	
+				
+			}
+			else
+			{
+				printf("\n Invalid command ");
+				exit(1);
+			}
+		
+
 //			printf("\nTransfer Completed\n\n");
+			i=1;
 			fflush(stdout);
 			sleep(2);
 		}

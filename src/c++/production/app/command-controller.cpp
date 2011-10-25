@@ -23,11 +23,11 @@ void* do_loop(void* data) {
 	}
     	else if(x==2)
 	{
-		exit(1);
+		system("./pulseox-pub &");
 	}
     	else if(x==3)
 	{
-		exit(1);
+		system("./tempmonitor-pub &");
 	}
 	else
 	{
@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 		
 		cout<<"1----BLOOD_PRESSURE\n";
   		cout<<"2----PULSE_OX\n";
-		cout<<"2----TEMPERATURE\n";
+		cout<<"3----TEMPERATURE\n";
   		cout<<"Enter the choice : ";
   		cin>>x;
 			

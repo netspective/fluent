@@ -1,0 +1,15 @@
+module com {
+	module netspective {
+		module medigy {
+			struct PulseOximeter {
+				string deviceDomain;
+				string deviceID;
+				long timeOfMeasurement;
+				short SPO2;
+				short pulseRatePerMinute;
+			};
+			#pragma keylist PulseOximeter
+
+		};
+	};
+};

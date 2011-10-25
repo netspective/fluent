@@ -28,8 +28,7 @@ INSTALLATION STEPS
 
 OpenSpliceDDS
 -------------
-OpenSplice DDS is the most advanced, complete and widely used commercial and open source implementation 
-of the OMG Data Distribution Service for Real-Time Systems (DDS) standard.
+OpenSplice DDS is one of several open source implementation of the OMG Data Distribution Service for Real-Time Systems (DDS) standard.
 
 Download the OpenSplice From: 
 http://www.prismtech.com/opensplice/opensplice-dds-community/software-downloads
@@ -58,7 +57,7 @@ libboost-signals-dev libboost-test-dev libboost-thread-dev
 
 Simd-CXX
 --------
-SIMD is used to simplify the use of DDS. We can create dds application using api
+SIMD is used to simplify the use of DDS. We can create dds application using API
 (template and meta-programming )  from SimD.
 
 It reduces the big lines of code. 
