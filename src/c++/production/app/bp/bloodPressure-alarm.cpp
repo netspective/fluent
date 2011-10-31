@@ -11,13 +11,56 @@
 #include <dds/topic.hpp>
 #include <dds/reader.hpp>
 #include <dds/traits.hpp>
-
+namespace po = boost::program_options;
 std::stringstream temp;
+int sysalarm,pulsealarm,disalarm;
 
 REGISTER_TOPIC_TRAITS(com::netspective::medigy::BloodPressure)
 
+bool parse_args(int argc, char* argv[])
+{
+  po::options_description desc("Available options for <bloodPressure-alarm> are");
+  desc.add_options()
+    ("help", "produce help message")
+    ("SystolicAlarm", po::value<int>(), "Systolic Pressure Alarm Specification")
+    ("DiatolicAlarm", po::value<int>(), "Diatolic Pressure Alarm Specification")
+    ("PulseRateAlarm", po::value<int>(), "Pulse Rate Alarm Specification")
+	
+    ;
+
+  try {
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help") || argc == 1) {
+      std::cout << desc << "\n";
+      return false;
+    }
+
+    if (vm.count("SystolicAlarm"))
+      sysalarm = vm["SystolicAlarm"].as<int>();
+	
+    if (vm.count("DiatolicAlarm"))
+      disalarm = vm["DiatolicAlarm"].as<int>();
+	
+
+    if (vm.count("PulseRateAlarm"))
+      pulsealarm = vm["PulseRateAlarm"].as<int>();
+
+    }
+  
+  catch (...) {
+    std::cout << desc << "\n";
+    return false;
+  }
+  return true;
+}  
+
 int main(int argc, char* argv[]) 
 {
+	if (!parse_args(argc, argv))
+    	return 1;
 
 	std::string partition = "blood";
 
@@ -44,7 +87,7 @@ int main(int argc, char* argv[])
 	while (true) {
 		dr.take(data, info);
 		for (uint32_t i = 0; i < data.length(); ++i) {
-			if ( data[i].systolicPressure > 130 || data[i].diastolicPressure <60 || data[i].pulseRatePerMinute <60 )
+			if ( data[i].systolicPressure > sysalarm || data[i].diastolicPressure < disalarm || data[i].pulseRatePerMinute < pulsealarm )
 			{
 				std::cout <<"\nTime : "<<data[i].timeOfMeasurement <<" Patient Blood Pressure alarm \nSystolic: "<< data[i].systolicPressure;
 				std::cout <<" \nDiastolic: "<<data[i].diastolicPressure<<" \nPULSE: "<<data[i].pulseRatePerMinute;
@@ -55,3 +98,4 @@ int main(int argc, char* argv[])
 	}
 	return 0;
 }
+
