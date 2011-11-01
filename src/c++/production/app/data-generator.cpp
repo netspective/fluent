@@ -63,7 +63,7 @@ void* handle_client(void *arg)
 				strcat(send_data,":");
 				strcat(send_data,temp);
 
-				send(client, send_data,strlen(send_data), 0);
+				send(client, send_data,strlen(send_data), MSG_NOSIGNAL);
 				sleep(1);
 				fflush(stdout);
 				i++;
@@ -89,7 +89,7 @@ void* handle_client(void *arg)
 				strcat(send_data,":");
 				strcat(send_data,temp);
 
-				send(client, send_data,strlen(send_data), 0);
+				send(client, send_data,strlen(send_data), MSG_NOSIGNAL);
 				sleep(1);
 				fflush(stdout);
 				i++;
@@ -110,7 +110,7 @@ void* handle_client(void *arg)
 				strcat(send_data,":");
 				strcat(send_data,temp);
 
-				send(client, send_data,strlen(send_data), 0);
+				send(client, send_data,strlen(send_data), MSG_NOSIGNAL);
 				sleep(1);
 				fflush(stdout);
 				i++;
