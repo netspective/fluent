@@ -28,10 +28,9 @@ bool parse_args(int argc, char* argv[])
   po::options_description desc("Available options for <BloodPressure Publisher> are");
   desc.add_options()
     ("help", "produce help message")
-    ("Domain", po::value<std::string>(), "Device Domain ")
-    ("Device-ID",po::value<std::string>(), "Device ID - for device identification")
-    ("Spawn", po::value<int>(), "Number of Releses from Publisher")
-    ("Log-file", po::value<std::string>(), "Log File Location")
+    ("domain", po::value<std::string>(), "Device Domain ")
+    ("device-id",po::value<std::string>(), "Device ID - for device identification")
+    ("log-file", po::value<std::string>(), "Log File Location")
     ;
  
   try {
@@ -45,17 +44,23 @@ bool parse_args(int argc, char* argv[])
     }
     
     
-    if (vm.count("Domain")) 
-      domainid = vm["Domain"].as<std::string>();
+    if (vm.count("domain")) 
+      domainid = vm["domain"].as<std::string>();
 
-    if (vm.count("Device-ID")) 
-      deviceid = vm["Device-ID"].as<std::string>();
+    if (vm.count("device-id")) 
+	{
+      deviceid = vm["device-id"].as<std::string>();
+	string key ("{");
+  	size_t start,end;
+  	string key1 ("}");
+        start=deviceid.rfind(key);
+        end=deviceid.rfind(key1);
+        deviceid = deviceid.substr(0,start)+deviceid.substr(start+1,end-start-1);
+	cout<<"\n"<<deviceid;	
+	}
 
-    if (vm.count("Spawn")) 
-      spawn = vm["Spawn"].as<int>();
-    
-    if (vm.count("Log-file")) 
-      logfile = vm["Log-file"].as<std::string>();
+    if (vm.count("log-file")) 
+      logfile = vm["log-file"].as<std::string>();
     
   } 
   catch (...) {
@@ -83,7 +88,7 @@ int main(int argc, char* argv[])
 	tQos.set_reliable();
 	tQos.set_keep_last(10);
 	tQos.set_durability_service(cleanup_delay,DDS::KEEP_LAST_HISTORY_QOS,1024,8192,4196,8192);
-	dds::Topic<com::netspective::medigy::BloodPressure> topic("BloodPressure", tQos);
+	dds::Topic<com::netspective::medigy::BloodPressure> topic(deviceid, tQos);
 	dds::DataWriterQos dwQos(tQos);
 	dwQos.set_auto_dispose(false);
 	dds::DataWriter<com::netspective::medigy::BloodPressure> dw(topic, dwQos);
@@ -125,16 +130,18 @@ int main(int argc, char* argv[])
 	}
 
 	flag=0;
-	tt.deviceDomain = DDS::string_dup(domainid.c_str());
+
 	tt.deviceID = DDS::string_dup(deviceid.c_str());
+	tt.deviceDomain = DDS::string_dup(domainid.c_str());
+
 	
-	std::cout<<"\n"<<tt.deviceDomain<<"         "<<tt.deviceID<<"\n";
+	//std::cout<<"\nDOMAIN - "<<tt.deviceDomain<<"  DEVICE-ID - "<<tt.deviceID<<"\n";
 	while (1) 
 	{
 		
 		while (recv(socketDescriptor, buf, 50, 0) > 0) 
 		{
-			std::cout <<buf<<"\n";
+			std::cout <<"DEVICE-ID -- "<<tt.deviceID<<" -- "<<buf<<"\n";
 			char * pch;
 			pch = strtok (buf,":");
 			tt.timeOfMeasurement = atol(pch);
@@ -145,11 +152,11 @@ int main(int argc, char* argv[])
 			pch = strtok (NULL, ":");
 			tt.pulseRatePerMinute = (short)atoi (pch);
 			dw.write(tt);
-			if(flag == spawn)
-			{
-				exit(1);
-			}
-			flag++;
+			//if(flag == spawn)
+			//{
+			//	exit(1);
+			//}
+			//flag++;
 		}
 
 	}
