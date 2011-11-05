@@ -102,7 +102,8 @@ $(CPP_DIR)/app/bp/bp-pub: $(CPP_DIR)/lib/gen/bp/libbp.a
             -c bloodPressure-pub.cpp; \
 	$(CPP) $(CPPFLAGS) -o $(TOPDIR)/bin/bp-pub bloodPressure-pub.o \
             $(CPP_DIR)/lib/gen/bp/libbp.a $(LDFLAGS) \
-            $(LIBS) $(BOOST_LIBS)  $(SIMD_LIBS);
+            $(LIBS) $(BOOST_LIBS)  -llog4cpp -lpthread $(SIMD_LIBS); \
+	    cp $(CPP_DIR)/app/bp-pub.sh $(TOPDIR)/bin;
 
 
 # Build the bp-sub-echo binary
@@ -270,3 +271,6 @@ $(CPP_DIR)/app/temp-monitor/tempmonitor-sub-persist: $(CPP_DIR)/lib/gen/tempmoni
         $(CPP) $(CPPFLAGS) -o $(TOPDIR)/bin/tempmonitor-sub-persist tempMonitor-persist.o \
             $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(LDFLAGS) \
             $(LIBS) $(BOOST_LIBS)  -lmongoclient $(SIMD_LIBS);
+
+
+

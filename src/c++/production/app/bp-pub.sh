@@ -52,6 +52,6 @@ rm -f /var/log/netspective/*
 for (( j = 1 ; j <= $spawn; j++ ))
 do
 	echo "./bp-pub --domain $domain --device-id $deviceid{$j} --log-file $logfile/bp-pub-deviceid{$j}.log"
-	./bp-pub --domain $domain --device-id $deviceid{$j} --log-file /var/log/netspective/bp-pub-$deviceid{$j}.log > /var/log/netspective/bp-pub-$deviceid{$j}.log &
+	./bp-pub --domain $domain --device-id $deviceid{$j} --log-file /var/log/netspective/bp-pub-$deviceid{$j}.log  > /dev/null &
 	sleep 5
 done
