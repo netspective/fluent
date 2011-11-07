@@ -11,7 +11,6 @@
 #include <log4cpp/Category.hh>
 #include <log4cpp/FileAppender.hh>
 #include <log4cpp/SimpleLayout.hh>
-#include <ctime>
 #include <boost/program_options.hpp>
 #define MAX_LINE 100
 #define LINE_ARRAY_SIZE (MAX_LINE+1)
@@ -30,7 +29,8 @@ string current_time()
 {
 	time_t rawtime;
 	time ( &rawtime );	
-	return ctime(&rawtime);
+	string str = ctime(&rawtime);
+        return str.substr(0,str.size()-1);	
 
 }
 bool parse_args(int argc, char* argv[])
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
 	appender->setLayout(layout);
     	category.setAppender(appender);
     	//category.setPriority(log4cpp::Priority::info);
-	category.info(deviceid + " : Blood Pressure Publisher Started at "+current_time());
+	category.info(current_time()+" Blood Pressure Publisher Started");
 	std::stringstream ss;
 	std::stringstream TimeStamp;
 	std::string partition = "blood";
@@ -116,9 +116,9 @@ int main(int argc, char* argv[])
 	hostInfo = gethostbyname("127.0.0.1");
 	if (hostInfo == NULL) 
 	{
-		category.info("Problem interpreting By HostInfo");
+		category.info(current_time()+" Problem interpreting By HostInfo");
 		//cout << "problem interpreting host: " << buf << "\n";
-		 category.info(deviceid +" BloodPressure Publisher Ends at "+current_time());	
+		 category.info(current_time()+" BloodPressure Publisher Ends");	
 		exit(1);
 	}
 	serverPort=5000;
@@ -126,8 +126,8 @@ int main(int argc, char* argv[])
 	socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 	if (socketDescriptor < 0) 
 	{
-		category.info("Not able create the Socket");
-		category.info(deviceid +" BloodPressure Publisher Ends at "+current_time());	
+		category.info(current_time()+" Not able create the Socket");
+		category.info(current_time()+" BloodPressure Publisher Ends");	
 		//cerr << "cannot create socket\n";
 		exit(1);
 	}
@@ -139,17 +139,17 @@ int main(int argc, char* argv[])
 
 	if (connect(socketDescriptor,(struct sockaddr *) &serverAddress,sizeof(serverAddress)) < 0) 
 	{
-		category.error("cannot connect with server");
-		category.info(deviceid +" BloodPressure Publisher Ends at "+current_time());
+		category.error(current_time()+" cannot connect with server");
+		category.info(current_time()+" BloodPressure Publisher Ends at ");
 		//cerr << "cannot connect\n";
 		exit(1);
 	}
 	strcpy(buf,"BP");
 	if (send(socketDescriptor, buf, strlen(buf) + 1, 0) < 0)
 	{
-		category.info("Not able to send data");
+		category.info(current_time()+" Not able to send data");
 		close(socketDescriptor);
-		category.info(deviceid +" BloodPressure Publisher Ends at "+current_time());
+		category.info(current_time()+" BloodPressure Publisher Ends");
 		exit(1);
 	}
 
@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
 		}
 
 	}
-	category.info(deviceid +" :  BloodPressure Publisher Ends at "+current_time());
+	category.info(current_time()+" BloodPressure Publisher Ends");
 	return 0;
 }
 

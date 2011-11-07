@@ -183,7 +183,8 @@ $(CPP_DIR)/app/pulseox/pulseox-pub: $(CPP_DIR)/lib/gen/pulseox/libpulseox.a
             -c pulseOximeter-pub.cpp; \
         $(CPP) $(CPPFLAGS) -o $(TOPDIR)/bin/pulseox-pub pulseOximeter-pub.o \
             $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(LDFLAGS) \
-            $(LIBS) $(BOOST_LIBS)  $(SIMD_LIBS);
+            $(LIBS) $(BOOST_LIBS)  -llog4cpp -lpthread $(SIMD_LIBS); \
+	    cp $(CPP_DIR)/app/pulseox-pub.sh $(TOPDIR)/bin;
 
 
 # Build the pulseox-sub-echo binary
@@ -242,7 +243,8 @@ $(CPP_DIR)/app/temp-monitor/tempmonitor-pub: $(CPP_DIR)/lib/gen/tempmonitor/libt
             -c tempMonitor-pub.cpp; \
         $(CPP) $(CPPFLAGS) -o $(TOPDIR)/bin/tempmonitor-pub tempMonitor-pub.o \
             $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(LDFLAGS) \
-            $(LIBS) $(BOOST_LIBS)  $(SIMD_LIBS);
+            $(LIBS) $(BOOST_LIBS) -llog4cpp -lpthread  $(SIMD_LIBS); \
+	    cp $(CPP_DIR)/app/tempmonitor-pub.sh $(TOPDIR)/bin;
 
 
 # Build the tempmonitor-sub-echo binary
