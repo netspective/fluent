@@ -22,6 +22,7 @@ The requirements for compiling and running :
 - BOOST Process (Already shipped with SimD)
 - GCC/G++ v4.1 (or higher)
 - CMake v2.6 (or higher)
+- Log for c++ 1.0 (or higher)
 
 INSTALLATION STEPS
 ------------------
@@ -92,6 +93,20 @@ GCC is an integrated distribution of compilers for several major programming lan
 
 $ apt-get install build-essential
 
+LOG FOR C++
+-----------
+Log4cpp is library of C++ classes for logging to files, syslog and other destinations.
+
+Download the log4cpp from the path http://sourceforge.net/projects/log4cpp/files/
+
+$ ./configure
+
+$ make
+
+$ make check
+
+$ make install
+
 
 COMPILATION STEPS
 -----------------
@@ -99,6 +114,7 @@ COMPILATION STEPS
 This package contains the following files:
 
 support/build/Makefile
+
 src/c++/production/app/data-generator.cpp
 
 src/c++/production/app/command-controller.cpp
@@ -107,9 +123,31 @@ src/c++/production/app/bp/bloodPressure-pub.cpp
 
 src/c++/production/app/bp/bloodPressure-echo.cpp
 
+src/c++/production/app/bp/bloodPressure-alarm.cpp
+
 src/c++/production/app/bp/bloodPressure-persist.cpp
 
+src/c++/production/app/pulseox/pulseOximeter-pub.cpp
+
+src/c++/production/app/pulseox/pulseOximeter-echo.cpp
+
+src/c++/production/app/pulseox/pulseOximeter-alarm.cpp
+
+src/c++/production/app/pulseox/pulseOximeter-persist.cpp
+
+src/c++/production/app/temp-monitor/tempMonitor-pub.cpp
+
+src/c++/production/app/temp-monitor/tempMonitor-echo.cpp
+
+src/c++/production/app/temp-monitor/tempMonitor-alarm.cpp
+
+src/c++/production/app/temp-monitor/tempMonitor-persist.cpp
+
 src/idl/bp.idl
+
+src/idl/pulseox.idl
+
+src/idl/tempmonitor.idl
 
 To build, do the following
 
@@ -132,15 +170,41 @@ $ cd support/build
 
 $ make
 
-This will create four programs:
+This will create following programs:
 
-src/c++/production/app/bp/bp-pub
+bin/data-generator
 
-src/c++/production/app/bp/bp-sub
+bin/command-controller
 
-src/c++/production/app/data-generator
+bin/bp-pub
 
-src/c++/production/app/command-controller
+bin/bp-sub-echo
+
+bin/bp-sub-alarm
+
+bin/bp-sub-persist
+
+bin/pulseox-pub
+
+bin/pulseox-sub-echo
+
+bin/pulseox-sub-alarm
+
+bin/pulseox-sub-persist
+
+bin/tempmonitor-pub
+
+bin/tempmonitor-sub-echo
+
+bin/tempmonitor-sub-alarm
+
+bin/tempmonitor-sub-persist
+
+bin/bp-pub.sh
+
+bin/pulseox-pub.sh
+
+bin/tempmonitor-pub.sh
 
 To clean all the generated files run
 
