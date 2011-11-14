@@ -1,5 +1,5 @@
 #include <iostream>
-#include <iostream>
+#include "SimpleDDS.h"
 #include <dds/dds.hpp>
 #include "ccpp_bp.h"
 
@@ -11,12 +11,13 @@
 #include <dds/topic.hpp>
 #include <dds/reader.hpp>
 #include <dds/traits.hpp>
+
+using namespace DDS;
 using namespace std;
 namespace po = boost::program_options;
+using namespace com::netspective::medigy;
 std::stringstream temp;
 std::string domainid,deviceid;
-
-REGISTER_TOPIC_TRAITS(com::netspective::medigy::BloodPressure)
 
 bool parse_args(int argc, char* argv[])
 {
@@ -43,13 +44,13 @@ bool parse_args(int argc, char* argv[])
     if (vm.count("device-id"))
 	{
       deviceid = vm["device-id"].as<std::string>();
-	string key ("{");
-        size_t start,end;
-        string key1 ("}");
-        start=deviceid.rfind(key);
-        end=deviceid.rfind(key1);
-        deviceid = deviceid.substr(0,start)+deviceid.substr(start+1,end-start-1);
-        cout<<"\n"<<deviceid;
+	//string key ("{");
+        //size_t start,end;
+        //string key1 ("}");
+        //start=deviceid.rfind(key);
+        //end=deviceid.rfind(key1);
+        //deviceid = deviceid.substr(0,start)+deviceid.substr(start+1,end-start-1);
+        //cout<<"\n"<<deviceid;
 	}
 	   
 
@@ -63,48 +64,65 @@ bool parse_args(int argc, char* argv[])
 } 
 int main(int argc, char* argv[]) 
 {
-	if (!parse_args(argc, argv))
-    	return 1;
-
-	std::string partition = "blood";
-
-	dds::Runtime runtime(partition);
-	dds::Duration cleanup_delay = {3600, 0};
-
-	dds::TopicQos tQos;
-	tQos.set_persistent();
-	tQos.set_reliable();
-	tQos.set_keep_last(10);
-	tQos.set_durability_service(cleanup_delay, DDS::KEEP_LAST_HISTORY_QOS, 1024, 8192, 4196, 8192);
-
-	dds::Topic<com::netspective::medigy::BloodPressure> topic(deviceid, tQos);
-
-	dds::DataReaderQos drQos(tQos);
-	dds::DataReader<com::netspective::medigy::BloodPressure> dr(topic, drQos);
-
-	com::netspective::medigy::BloodPressureSeq data;
-	DDS::SampleInfoSeq info;
-
-	dds::Duration timeout = {60, 0};
-	dr.wait_for_historical_data(timeout);
-	//std::string tmp=data[0].deviceID;
-	
-	while (true) {
-		dr.take(data, info);
-		for (uint32_t i = 0; i < data.length(); ++i) {
-			temp << data[i].deviceID;
-			std::cout << data[i].deviceID<<"\n";
-			std::cout <<"#######################################################\n";
-			std::cout <<"\nDevice ID : " << data[i].deviceID;
-			std::cout <<"\nMeasured Time : " << data[i].timeOfMeasurement;
-			std::cout <<"\nSystolicPressure :"<< data[i].systolicPressure;
-			std::cout <<"\nDiastolicPressure :"<< data[i].diastolicPressure;
-			std::cout <<"\nPulseRatePerMinute :"<< data[i].pulseRatePerMinute;
-			std::cout <<"\n#####################################################\n";
-			dr.return_loan(data, info);
+	 if (!parse_args(argc, argv))
+    	 return 1;
+	 SimpleDDS *simpledds;
+	 BloodPressureTypeSupport_var typesupport;
+    	 DataReader_ptr reader;
+    	 BloodPressureDataReader_var bpReader;
+    	 ReturnCode_t status;
+	 int i=0;
+         DDS::TopicQos tQos;
+         tQos.durability.kind=VOLATILE_DURABILITY_QOS;
+         tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
+         tQos.history.depth=10;
+         tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
+         tQos.durability_service.history_depth= 1024;
+         simpledds = new SimpleDDS(tQos);
+	 typesupport = new BloodPressureTypeSupport();
+    	 reader = simpledds->subscribe(typesupport);
+    	 bpReader = BloodPressureDataReader::_narrow(reader);
+   	 BloodPressureSeq  bpList;
+     	 SampleInfoSeq     infoSeq;
+    	 cout<<"Waiting to read bloodPressure data...\n";
+	 while (1) 
+	 {
+         	status = bpReader->take(
+            	bpList,
+            	infoSeq,
+            	LENGTH_UNLIMITED,
+            	ANY_SAMPLE_STATE,
+           	ANY_VIEW_STATE,
+            	ANY_INSTANCE_STATE);
+         	checkStatus(status, "take");
+          	if (status == RETCODE_NO_DATA) 
+		{
+          		continue;
+          	}
+          	for (i = 0; i < bpList.length(); i++) 
+	  	{
+			temp << bpList[i].deviceID;
+			if(strcmp(temp.str().c_str() , deviceid.c_str() ) == 0 )
+			{
+			cout <<"#######################################################\n";
+			cout <<"\nDevice ID : " << bpList[i].deviceID;
+			cout <<"\nMeasured Time : " << bpList[i].timeOfMeasurement;
+			cout <<"\nSystolicPressure :"<< bpList[i].systolicPressure;
+			cout <<"\nDiastolicPressure :"<< bpList[i].diastolicPressure;
+			cout <<"\nPulseRatePerMinute :"<< bpList[i].pulseRatePerMinute;
+			cout <<"\n#####################################################\n";
+			status = bpReader->return_loan(bpList, infoSeq);
+       			checkStatus(status, "return_loan");
+			}
 			temp.str("");
-		}
-		sleep(1);
-	}
-	return 0;
+	  }
+       
+    	}
+
+        /* We're done.  Delete everything */
+        simpledds->deleteReader(reader);
+        delete simpledds;
+        return 0;
+
+
 }

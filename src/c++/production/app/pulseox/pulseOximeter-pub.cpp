@@ -1,4 +1,5 @@
 #include <iostream>
+#include "SimpleDDS.h"
 #include <dds/dds.hpp>
 #include "ccpp_pulseox.h"
 #include <arpa/inet.h>
@@ -15,15 +16,17 @@
 #include <boost/program_options.hpp>
 #define MAX_LINE 100
 #define LINE_ARRAY_SIZE (MAX_LINE+1)
+using namespace DDS;
 using namespace std;
 namespace po = boost::program_options;
+using namespace com::netspective::medigy;
 int socketDescriptor;
 unsigned short int serverPort;
 struct sockaddr_in serverAddress;
 struct hostent *hostInfo;
 char buf[LINE_ARRAY_SIZE], c;
+int sizebuf;
 string pubtopic,domainid,deviceid,logfile;
-REGISTER_TOPIC_TRAITS(com::netspective::medigy::PulseOximeter)
 string current_time()
 {
 	time_t rawtime;
@@ -59,13 +62,13 @@ bool parse_args(int argc, char* argv[])
     if (vm.count("device-id")) 
 	{
       deviceid = vm["device-id"].as<std::string>();
-	string key ("{");
-  	size_t start,end;
-  	string key1 ("}");
-        start=deviceid.rfind(key);
-        end=deviceid.rfind(key1);
-        pubtopic = deviceid.substr(0,start)+deviceid.substr(start+1,end-start-1);
-	cout<<"\n"<<pubtopic;	
+	//string key ("{");
+  	//size_t start,end;
+  	//string key1 ("}");
+        //start=deviceid.rfind(key);
+        //end=deviceid.rfind(key1);
+        //pubtopic = deviceid.substr(0,start)+deviceid.substr(start+1,end-start-1);
+	//cout<<"\n"<<pubtopic;	
 	}
 
     if (vm.count("log-file")) 
@@ -92,19 +95,22 @@ int main(int argc, char* argv[])
 	std::stringstream ss;
 	std::stringstream TimeStamp;
 	std::string partition = "pulseox";
-	dds::Runtime runtime(partition);
-	dds::Duration cleanup_delay = {3600, 0};
-	dds::TopicQos tQos;
-	tQos.set_persistent();
-	tQos.set_reliable();
-	tQos.set_keep_last(10);
-	tQos.set_durability_service(cleanup_delay,DDS::KEEP_LAST_HISTORY_QOS,1024,8192,4196,8192);
-	dds::Topic<com::netspective::medigy::PulseOximeter> topic(pubtopic, tQos);
-	dds::DataWriterQos dwQos(tQos);
-	dwQos.set_auto_dispose(false);
-	dds::DataWriter<com::netspective::medigy::PulseOximeter> dw(topic, dwQos);
-	std::string tweet="test";
-	com::netspective::medigy::PulseOximeter tt;
+	
+	SimpleDDS *simpledds;
+	PulseOximeterTypeSupport_var typesupport;
+	DataWriter_ptr writer;
+	PulseOximeterDataWriter_var bpWriter;
+	DDS::TopicQos tQos;
+	tQos.durability.kind=VOLATILE_DURABILITY_QOS;
+	tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
+	tQos.history.depth=10;
+	tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
+	tQos.durability_service.history_depth= 1024;
+	simpledds = new SimpleDDS(tQos);
+	typesupport = new PulseOximeterTypeSupport();
+	writer = simpledds->publish(typesupport);
+	bpWriter = PulseOximeterDataWriter::_narrow(writer);
+	PulseOximeter data;
 
 	/*Connection with test data generator*/
 	hostInfo = gethostbyname("127.0.0.1");
@@ -146,22 +152,27 @@ int main(int argc, char* argv[])
 		close(socketDescriptor);
 		exit(1);
 	}
-
+	data.deviceID = DDS::string_dup(deviceid.c_str());
+	data.deviceDomain = DDS::string_dup(domainid.c_str());
 	while (1) 
 	{
-		while (recv(socketDescriptor, buf, 50, 0) > 0) 
+		while ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
 		{
+			buf[sizebuf]='\0';
 			std::cout <<buf<<"\n";
 			char * pch;
 			pch = strtok (buf,":");
-			tt.timeOfMeasurement = atol(pch);
+			data.timeOfMeasurement = atol(pch);
 			pch = strtok (NULL, ":");
-			tt.SPO2 = (short)atoi(pch);		
+			data.SPO2 = (short)atoi(pch);		
 			pch = strtok (NULL, ":");
-			tt.pulseRatePerMinute = (short)atoi (pch);
-			dw.write(tt);
+			data.pulseRatePerMinute = (short)atoi (pch);
+			bpWriter->write(data, NULL);
+			sleep(1);
 		}
 	}
 	category.info(current_time()+" Pulse Oximeter Publisher Ends ");
+	simpledds->deleteWriter(writer);
+	delete simpledds;
 	return 0;
 }

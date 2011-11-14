@@ -1,3 +1,4 @@
+#include "SimpleDDS.h"
 #include <iostream>
 #include <dds/dds.hpp>
 #include "ccpp_bp.h"
@@ -14,17 +15,17 @@
 #include <boost/program_options.hpp>
 #define MAX_LINE 100
 #define LINE_ARRAY_SIZE (MAX_LINE+1)
+using namespace DDS;
 using namespace std;
 namespace po = boost::program_options;
+using namespace com::netspective::medigy;
 int socketDescriptor;
 unsigned short int serverPort;
 struct sockaddr_in serverAddress;
 struct hostent *hostInfo;
 char buf[LINE_ARRAY_SIZE], c;
 string pubtopic,domainid,deviceid,logfile;
-int spawn,flag;
-
-REGISTER_TOPIC_TRAITS(com::netspective::medigy::BloodPressure)
+int spawn,flag,sizebuf;
 string current_time()
 {
 	time_t rawtime;
@@ -60,13 +61,13 @@ bool parse_args(int argc, char* argv[])
     if (vm.count("device-id")) 
 	{
       deviceid = vm["device-id"].as<std::string>();
-	string key ("{");
-  	size_t start,end;
-  	string key1 ("}");
-        start=deviceid.rfind(key);
-        end=deviceid.rfind(key1);
-        pubtopic = deviceid.substr(0,start)+deviceid.substr(start+1,end-start-1);
-	cout<<"\n"<<pubtopic;	
+	//string key ("{");
+  	//size_t start,end;
+  	//string key1 ("}");
+        //start=deviceid.rfind(key);
+        //end=deviceid.rfind(key1);
+        //pubtopic = deviceid.substr(0,start)+deviceid.substr(start+1,end-start-1);
+	//cout<<"\n"<<pubtopic;	
 	}
 
     if (vm.count("log-file")) 
@@ -87,7 +88,8 @@ int main(int argc, char* argv[])
 
 	if (!parse_args(argc, argv))
     	return 1;
-
+	
+	
 	log4cpp::Appender *appender = new log4cpp::FileAppender("FileAppender",logfile);
 	log4cpp::Layout *layout = new log4cpp::SimpleLayout();
 	log4cpp::Category& category = log4cpp::Category::getInstance("Category");
@@ -98,19 +100,21 @@ int main(int argc, char* argv[])
 	std::stringstream ss;
 	std::stringstream TimeStamp;
 	std::string partition = "blood";
-	dds::Runtime runtime(partition);
-	dds::Duration cleanup_delay = {3600, 0};
-	dds::TopicQos tQos;
-	tQos.set_persistent();
-	tQos.set_reliable();
-	tQos.set_keep_last(10);
-	tQos.set_durability_service(cleanup_delay,DDS::KEEP_LAST_HISTORY_QOS,1024,8192,4196,8192);
-	dds::Topic<com::netspective::medigy::BloodPressure> topic(pubtopic, tQos);
-	dds::DataWriterQos dwQos(tQos);
-	dwQos.set_auto_dispose(false);
-	dds::DataWriter<com::netspective::medigy::BloodPressure> dw(topic, dwQos);
-	std::string tweet="test";
-	com::netspective::medigy::BloodPressure tt;
+
+	SimpleDDS *simpledds;
+	BloodPressureTypeSupport_var typesupport;
+	DataWriter_ptr writer;
+	BloodPressureDataWriter_var bpWriter;
+	DDS::TopicQos tQos;
+	tQos.durability.kind=VOLATILE_DURABILITY_QOS;
+	tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
+	tQos.history.depth=10;
+	tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
+	tQos.durability_service.history_depth= 1024;
+	simpledds = new SimpleDDS(tQos);
+	typesupport = new BloodPressureTypeSupport();
+	writer = simpledds->publish(typesupport);
+	bpWriter = BloodPressureDataWriter::_narrow(writer);
 
 	/*Connection with test data generator*/
 	hostInfo = gethostbyname("127.0.0.1");
@@ -154,37 +158,34 @@ int main(int argc, char* argv[])
 	}
 
 	flag=0;
+	BloodPressure data;
+	data.deviceID = DDS::string_dup(deviceid.c_str());
+	data.deviceDomain = DDS::string_dup(domainid.c_str());
 
-	tt.deviceID = DDS::string_dup(deviceid.c_str());
-	tt.deviceDomain = DDS::string_dup(domainid.c_str());
-
-	
-	//std::cout<<"\nDOMAIN - "<<tt.deviceDomain<<"  DEVICE-ID - "<<tt.deviceID<<"\n";
 	while (1) 
 	{
 		
-		while (recv(socketDescriptor, buf, 50, 0) > 0) 
+		while ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
 		{
-			std::cout <<"DEVICE-ID -- "<<tt.deviceID<<" -- "<<buf<<"\n";
+			buf[sizebuf]='\0';
+			std::cout <<"DEVICE-ID -- "<<data.deviceID<<" -- "<<buf<<"\n";
 			char * pch;
 			pch = strtok (buf,":");
-			tt.timeOfMeasurement = atol(pch);
+			data.timeOfMeasurement = atol(pch);
 			pch = strtok (NULL, ":");
-			tt.systolicPressure = (short)atoi(pch);		
+			data.systolicPressure = (short)atoi(pch);		
 			pch = strtok (NULL, ":");
-			tt.diastolicPressure = (short)atoi(pch);
+			data.diastolicPressure = (short)atoi(pch);
 			pch = strtok (NULL, ":");
-			tt.pulseRatePerMinute = (short)atoi (pch);
-			dw.write(tt);
-			//if(flag == spawn)
-			//{
-			//	exit(1);
-			//}
-			//flag++;
+			data.pulseRatePerMinute = (short)atoi (pch);
+			bpWriter->write(data, NULL);
 		}
 
 	}
+	
 	category.info(current_time()+" BloodPressure Publisher Ends");
+	simpledds->deleteWriter(writer);
+	delete simpledds;
 	return 0;
 }
 
