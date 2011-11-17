@@ -12,8 +12,8 @@ CPP_LIB_DIR=$(TOPDIR)/src/c++/production/lib
 
 # The C/C++ compilers to use
 CPP=/usr/bin/g++ 
-CC=/usr/bin/gcc
-IDLPP=idlpp
+iCC=/usr/bin/gcc
+IDLPP= idlpp
 
 # The C/C++ compiler flags
 CPPFLAGS= -g -Wall -I$(OSPL_HOME)/include/dcps/C++/SACPP -I$(OSPL_HOME)/include -I$(OSPL_HOME)/include/sys -I$(CPP_LIB_DIR)
@@ -84,36 +84,40 @@ $(CPP_DIR)/lib/gen/bp/libbp.a: $(CPP_DIR)/lib/gen/bp/bp.h
 SimpleDDS.o: $(CPP_LIB_DIR)/SimpleDDS.cpp
 	$(CPP) $(CPPFLAGS) -c $(CPP_LIB_DIR)/SimpleDDS.cpp
 
+# Compile the Functions helper class
+Functions.o: $(CPP_LIB_DIR)/Functions.cpp
+	$(CPP) $(CPPFLAGS) -c $(CPP_LIB_DIR)/Functions.cpp
+
 
 # Compile the bloodPressurePublish binary
-$(CPP_DIR)/app/bp/bp-pub: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a
+$(CPP_DIR)/app/bp/bp-pub: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(CPP_LIB_DIR)/Functions.o
 	cd $(CPP_DIR)/app/bp; \
 	$(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/bp -c $(CPP_DIR)/app/bp/bloodPressure-pub.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -llog4cpp -lpthread  -o $(TOPDIR)/bin/bp-pub $(CPP_DIR)/app/bp/bloodPressure-pub.o \
-	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(LIBS); \
+	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/bp/libbp.a $(LIBS); \
 	cp $(CPP_DIR)/app/bp-pub.sh $(TOPDIR)/bin;
 
 
 # Compile the bloodPressureSubscribe binary
-$(CPP_DIR)/app/bp/bp-sub-echo: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a
+$(CPP_DIR)/app/bp/bp-sub-echo: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(CPP_LIB_DIR)/Functions.o
 	cd $(CPP_DIR)/app/bp; \
 	$(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/bp -c $(CPP_DIR)/app/bp/bloodPressure-echo.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -llog4cpp -lpthread  -o $(TOPDIR)/bin/bp-sub-echo $(CPP_DIR)/app/bp/bloodPressure-echo.o \
-	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(LIBS);
+	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/bp/libbp.a $(LIBS);
 
 # Compile the bloodPressureSubscribe binary
-$(CPP_DIR)/app/bp/bp-sub-alarm: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a
+$(CPP_DIR)/app/bp/bp-sub-alarm: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(CPP_LIB_DIR)/Functions.o
 	cd $(CPP_DIR)/app/bp; \
         $(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/bp -c $(CPP_DIR)/app/bp/bloodPressure-alarm.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -llog4cpp -lpthread  -o $(TOPDIR)/bin/bp-sub-alarm $(CPP_DIR)/app/bp/bloodPressure-alarm.o \
-        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(LIBS);
+        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/bp/libbp.a $(LIBS);
 
 # Compile the bloodPressureSubscribe binary
-$(CPP_DIR)/app/bp/bp-sub-persist: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a
+$(CPP_DIR)/app/bp/bp-sub-persist: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(CPP_LIB_DIR)/Functions.o
 	cd $(CPP_DIR)/app/bp; \
         $(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/bp -c $(CPP_DIR)/app/bp/bloodPressure-persist.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -lmongoclient -llog4cpp -lpthread  -o $(TOPDIR)/bin/bp-sub-persist $(CPP_DIR)/app/bp/bloodPressure-persist.o \
-        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(LIBS);
+        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/bp/libbp.a $(LIBS);
 
 # Generate the pulseox C++ source files from the IDL
 $(CPP_DIR)/lib/gen/pulseox/pulseox.h:
@@ -131,34 +135,34 @@ $(CPP_DIR)/lib/gen/pulseox/libpulseox.a: $(CPP_DIR)/lib/gen/pulseox/pulseox.h
         ranlib libpulseox.a
 
 # Compile the pulseOximeterPublish binary
-$(CPP_DIR)/app/pulseox/pulseox-pub: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a
+$(CPP_DIR)/app/pulseox/pulseox-pub: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(CPP_LIB_DIR)/Functions.o
 	cd $(CPP_DIR)/app/pulseox; \
 	$(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/pulseox -c $(CPP_DIR)/app/pulseox/pulseOximeter-pub.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -llog4cpp -lpthread  -o $(TOPDIR)/bin/pulseox-pub $(CPP_DIR)/app/pulseox/pulseOximeter-pub.o \
-	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(LIBS); \
+	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(LIBS); \
 	cp $(CPP_DIR)/app/pulseox-pub.sh $(TOPDIR)/bin;	
 
 
 # Compile the pulseOximeterSubscribe binary
-$(CPP_DIR)/app/pulseox/pulseox-sub-echo: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a
+$(CPP_DIR)/app/pulseox/pulseox-sub-echo: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(CPP_LIB_DIR)/Functions.o
 	cd $(CPP_DIR)/app/pulseox; \
 	$(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/pulseox -c $(CPP_DIR)/app/pulseox/pulseOximeter-echo.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -llog4cpp -lpthread  -o $(TOPDIR)/bin/pulseox-sub-echo $(CPP_DIR)/app/pulseox/pulseOximeter-echo.o \
-	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(LIBS);
+	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(LIBS);
 
 # Compile the pulseOximeterSubscribe binary
-$(CPP_DIR)/app/pulseox/pulseox-sub-alarm: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a
+$(CPP_DIR)/app/pulseox/pulseox-sub-alarm: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(CPP_LIB_DIR)/Functions.o
 	cd $(CPP_DIR)/app/pulseox; \
         $(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/pulseox -c $(CPP_DIR)/app/pulseox/pulseOximeter-alarm.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -llog4cpp -lpthread  -o $(TOPDIR)/bin/pulseox-sub-alarm $(CPP_DIR)/app/pulseox/pulseOximeter-alarm.o \
-        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(LIBS);
+        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(LIBS);
 
 # Compile the pulseOximeterSubscribe binary
-$(CPP_DIR)/app/pulseox/pulseox-sub-persist: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a
+$(CPP_DIR)/app/pulseox/pulseox-sub-persist: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(CPP_LIB_DIR)/Functions.o
 	cd $(CPP_DIR)/app/pulseox; \
         $(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/pulseox -c $(CPP_DIR)/app/pulseox/pulseOximeter-persist.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -lmongoclient -llog4cpp -lpthread  -o $(TOPDIR)/bin/pulseox-sub-persist $(CPP_DIR)/app/pulseox/pulseOximeter-persist.o \
-        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(LIBS);
+        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(LIBS);
 
 # Generate the tempmonitor C++ source files from the IDL
 $(CPP_DIR)/lib/gen/tempmonitor/tempmonitor.h:
@@ -176,34 +180,34 @@ $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a: $(CPP_DIR)/lib/gen/tempmonitor/
         ranlib libtempmonitor.a
 
 # Compile the tempMonitorPublish binary
-$(CPP_DIR)/app/temp-monitor/tempmonitor-pub: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a
+$(CPP_DIR)/app/temp-monitor/tempmonitor-pub: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(CPP_LIB_DIR)/Functions.o
 	cd $(CPP_DIR)/app/temp-monitor; \
 	$(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/tempmonitor -c $(CPP_DIR)/app/temp-monitor/tempMonitor-pub.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -llog4cpp -lpthread  -o $(TOPDIR)/bin/tempmonitor-pub $(CPP_DIR)/app/temp-monitor/tempMonitor-pub.o \
-	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(LIBS); \
+	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(LIBS); \
 	cp $(CPP_DIR)/app/tempmonitor-pub.sh $(TOPDIR)/bin;
 
 
 # Compile the tempMonitorSubscribe binary
-$(CPP_DIR)/app/temp-monitor/tempmonitor-sub-echo: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a
+$(CPP_DIR)/app/temp-monitor/tempmonitor-sub-echo: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(CPP_LIB_DIR)/Functions.o 
 	cd $(CPP_DIR)/app/temp-monitor; \
 	$(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/tempmonitor -c $(CPP_DIR)/app/temp-monitor/tempMonitor-echo.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -llog4cpp -lpthread  -o $(TOPDIR)/bin/tempmonitor-sub-echo $(CPP_DIR)/app/temp-monitor/tempMonitor-echo.o \
-	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(LIBS);
+	$(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(LIBS);
 
 # Compile the tempMonitorSubscribe binary
-$(CPP_DIR)/app/temp-monitor/tempmonitor-sub-alarm: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a
+$(CPP_DIR)/app/temp-monitor/tempmonitor-sub-alarm: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(CPP_LIB_DIR)/Functions.o
 	cd $(CPP_DIR)/app/temp-monitor; \
         $(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/tempmonitor -c $(CPP_DIR)/app/temp-monitor/tempMonitor-alarm.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -llog4cpp -lpthread  -o $(TOPDIR)/bin/tempmonitor-sub-alarm $(CPP_DIR)/app/temp-monitor/tempMonitor-alarm.o \
-        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(LIBS);
+        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(LIBS);
 
 # Compile the tempMonitorSubscribe binary
-$(CPP_DIR)/app/temp-monitor/tempmonitor-sub-persist: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a
+$(CPP_DIR)/app/temp-monitor/tempmonitor-sub-persist: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(CPP_LIB_DIR)/Functions.o 
 	cd $(CPP_DIR)/app/temp-monitor; \
         $(CPP) $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/tempmonitor -c $(CPP_DIR)/app/temp-monitor/tempMonitor-persist.cpp; \
         $(CPP) $(LDFLAGS) $(LIBS) $(BOOST_LIBS)  -lmongoclient -llog4cpp -lpthread  -o $(TOPDIR)/bin/tempmonitor-sub-persist $(CPP_DIR)/app/temp-monitor/tempMonitor-persist.o \
-        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(LIBS);
+        $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/tempmonitor/libtempmonitor.a $(LIBS);
 
 # Build the command-controller binary
 $(CPP_DIR)/app/command-controller: $(CPP_DIR)/lib/gen/bp/libbp.a

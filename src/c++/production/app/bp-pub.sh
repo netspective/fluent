@@ -9,10 +9,11 @@ function USAGE ()
     echo "    --domain  Device Domain"
     echo "    --device-id  Device ID to identify the particular device"
     echo "    --spawn  Number of publishers to run"
-    echo "    --log-file  Log file path"
+    echo "    --log-path  Log file path"
+    echo "    --log4cpp-conf  configration file path"
     echo ""
     echo "EXAMPLE:"
-    echo "    bp-pub.sh --device=blood --device-id=A10 --spawn=100 --log-file=/usr/local/dds.log"
+    echo "  ./bp-pub.sh --domain=blood --device-id=A10 --spawn=5 --log-path=/var/log/netspective/blood/ --log4cpp-conf ../src/c++/production/conf/covidien.pub"
     echo ""
     exit $E_OPTERROR    # Exit and explain usage, if no argument(s) given.
 }
@@ -33,14 +34,13 @@ do
 	--log-file=*)
                 logfile=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
                 ;;
+	--log4cpp-conf=*)
+                logfile=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+                ;;
     	--default)
 		USAGE
 		DEFAULT=YES
 		;;
-#    	*)
-#		USAGE
-                # unknown option
-#		;;
   	esac
 done
 
@@ -48,10 +48,14 @@ if [ $# -eq 0 ] ; then
     USAGE
 fi
 
-rm -f /var/log/netspective/*
+rm -f /var/log/netspective/blood/*
 for (( j = 1 ; j <= $spawn; j++ ))
 do
-	echo "./bp-pub --domain $domain --device-id $deviceid{$j} --log-file $logfile/bp-pub-deviceid{$j}.log"
-	./bp-pub --domain $domain --device-id $deviceid{$j} --log-file /var/log/netspective/bp-pub-$deviceid{$j}.log  > /dev/null &
+
+
+echo "./bp-pub --data-gen-ip 127.0.0.1 --domain $domain --device-id $deviceid{$j} --log-path /var/log/netspective/blood/ --log-category covidien.$domain.$deviceid{$j} --log-category-data covidien.$domain.$deviceid{$j}.data  --log4cpp-conf ../src/c++/production/conf/covidien.pub > /dev/null &"
+	./bp-pub --data-gen-ip 127.0.0.1 --domain $domain --device-id $deviceid{$j} --log-path /var/log/netspective/blood/ --log-category covidien.$domain.$deviceid{$j} --log-category-data covidien.$domain.$deviceid{$j}.data  --log4cpp-conf ../src/c++/production/conf/covidien.pub > /dev/null &
+	
 	sleep 5
+
 done

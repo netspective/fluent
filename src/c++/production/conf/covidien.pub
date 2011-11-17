@@ -1,0 +1,13 @@
+log4j.rootCategory=INFO, infoFILE
+log4j.Categoty=INFO, dataFILE
+
+appender.infoFILE=org.apache.log4j.FileAppender
+appender.infoFILE.fileName=INFOFILENAME
+appender.infoFILE.layout=org.apache.log4j.PatternLayout
+appender.infoFILE.layout.ConversionPattern=%d %-5p %c - %m%n
+
+appender.dataFILE=org.apache.log4j.FileAppender
+appender.dataFILE.fileName=DATAFILENAME
+appender.dataFILE.layout=org.apache.log4j.PatternLayout
+appender.dataFILE.layout.ConversionPattern= %m%n 
+
