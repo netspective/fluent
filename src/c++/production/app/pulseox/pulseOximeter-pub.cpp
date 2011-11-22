@@ -1,3 +1,4 @@
+			//PULSEOX -PUB//
 #include <iostream>
 #include "SimpleDDS.h"
 #include <dds/dds.hpp>
@@ -17,6 +18,7 @@
 #include <ctime>
 #include <boost/program_options.hpp>
 #include "Functions.h"
+#include<log4cpp/Configurator.hh>
 
 using namespace DDS;
 using namespace std;
@@ -29,23 +31,19 @@ struct sockaddr_in serverAddress;
 struct hostent *hostInfo;
 char buf[1024], c;
 int sizebuf;
-string domainid,deviceid,logfile,logcate,logcatedata,logconfpath,hostip;
-
+string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
+stringstream prtemp;
 int main(int argc, char* argv[]) 
 {
-	if (!parse_args_pub(argc, argv,hostip,domainid,deviceid,logfile,logcate,logcatedata,logconfpath))
+	if (!parse_args_pub(argc, argv,hostip,domainid,deviceid,loginfo,logdata,logconfpath))
         return 1;
 	
 	/*Importing log4cpp configuration and Creating category*/
-	log4cpp::PropertyConfigurator::configure(replaceconfstring(logfile,logconfpath,logcate,logcatedata).c_str());
- 	remove(logcate.c_str());	
-	log4cpp::Category& category = log4cpp::Category::getInstance(logcate);
- 	log4cpp::Category& categoryData = log4cpp::Category::getInstance(logcatedata);
-	category.setAdditivity(true);
-	categoryData.setAdditivity(true);
- 	category.addAppender(log4cpp::Appender::getAppender(std::string("infoFILE")));
- 	categoryData.addAppender(log4cpp::Appender::getAppender(std::string("dataFILE")));
-        category.info(" Pulse_MOnitor  Publisher Started");
+        log4cpp::Category &log_root = log4cpp::Category::getRoot();
+        log4cpp::Category &pulseInfo = log4cpp::Category::getInstance( std::string(loginfo));
+        log4cpp::Category &pulseData = log4cpp::Category::getInstance( std::string(logdata));
+        log4cpp::PropertyConfigurator::configure(logconfpath);
+        pulseInfo.notice(" Pulse Oximeter Publisher Started"+deviceid);
        	
 	/*Initializing SimpleDDS library*/
 	SimpleDDS *simpledds;
@@ -65,36 +63,33 @@ int main(int argc, char* argv[])
 	writer = simpledds->publish(typesupport);
 	bpWriter = PulseOximeterDataWriter::_narrow(writer);
 	hostInfo=gethostbyname(hostip.c_str());
-	PulseOximeter data;
 	
 	/*Initializing Socket Data*/
 	if (hostInfo == NULL) 
 	{	
-		category.error("Problem interpreting By HostInfo ");
-	
-	        category.notice(" Pulse Oximeter Publisher Ends ");
-		exit(1);
+		pulseInfo.error("Problem interpreting By HostInfo ");
+	        pulseInfo.notice(" Pulse Oximeter Publisher Ends ");
+		
 	}
 	serverPort=5000;
 	cin.get(c); 
 	socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 	if (socketDescriptor < 0) 
 	{
-		category.error("Not able create the Socket " );
-		category.notice(" Pulse Oximeter Publisher Ends ");
+		pulseInfo.error("Not able create the Socket " );
+		pulseInfo.notice("Pulse Oximeter Publisher Ends ");
 		exit(1);
 		
 	}
 	serverAddress.sin_family = hostInfo->h_addrtype;
-	memcpy((char *) &serverAddress.sin_addr.s_addr,
-			hostInfo->h_addr_list[0], hostInfo->h_length);
+	memcpy((char *) &serverAddress.sin_addr.s_addr,	hostInfo->h_addr_list[0], hostInfo->h_length);
 	serverAddress.sin_port = htons(serverPort);
 
 	/*Binding Socket with Server Data Generator*/
 	if (connect(socketDescriptor,(struct sockaddr *) &serverAddress,sizeof(serverAddress)) < 0) 
 	{
-		category.error(" cannot connect with server");
-		category.notice(" Pulse Oximeter Publisher Ends ");
+		pulseInfo.error(" cannot connect with server");
+		pulseInfo.notice(" Pulse Oximeter Publisher Ends ");
 		exit(1);
 	}
 
@@ -102,36 +97,44 @@ int main(int argc, char* argv[])
 	strcpy(buf,"PULSEOX");
 	if (send(socketDescriptor, buf, strlen(buf) + 1, 0) < 0)
 	{
-		category.error(" Not able to send data");
+		pulseInfo.error(" Not able to send data");
 		close(socketDescriptor);
-		category.error(" Pulse Oximeter Publisher Ends");
+		pulseInfo.notice(" Pulse Oximeter Publisher Ends");
 		exit(1);
 	}
+
+	PulseOximeter data;
 
 	/*Storing Domain and Device ID*/
 	data.deviceID = DDS::string_dup(deviceid.c_str());
 	data.deviceDomain = DDS::string_dup(domainid.c_str());
+	pulseInfo.notice("Pulse Oximeter  Started Publishing Data In DDS");
+        pulseInfo.notice("Format: TIMEOFMEASURED, OXYGEN_SATURATION, PULSERATE");
+
 	while (1) 
 	{
 
 		while ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
 		{
 			buf[sizebuf]='\0';
-			categoryData.info(buf);
 			char * pch;
 			pch = strtok (buf,":");
 			data.timeOfMeasurement = atol(pch);
+			prtemp<<data.timeOfMeasurement<<", ";
 			pch = strtok (NULL, ":");
 			data.SPO2 = (short)atoi(pch);		
+			prtemp<<data.SPO2<<", ";
 			pch = strtok (NULL, ":");
 			data.pulseRatePerMinute = (short)atoi (pch);
+			prtemp<<data.pulseRatePerMinute;
 			bpWriter->write(data, NULL);
-			sleep(1);
+			pulseData.info(prtemp.str().c_str());
+			prtemp.str("");
 		}
 	}
 
 	/*Deleting SimpleDDS Instance*/
-	category.info("Pulse Oximeter Publisher Ends ");
+	pulseInfo.notice("Pulse Oximeter Publisher Ends "+deviceid);
 	simpledds->deleteWriter(writer);
 	delete simpledds;
 	return 0;

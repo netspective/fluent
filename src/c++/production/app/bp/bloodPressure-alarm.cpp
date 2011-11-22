@@ -11,97 +11,50 @@
 #include <dds/topic.hpp>
 #include <dds/reader.hpp>
 #include <dds/traits.hpp>
+#define devid "deviceID"
+
+/*Log4cpp Library*/
+#include <log4cpp/Category.hh>
+#include <log4cpp/FileAppender.hh>
+#include <log4cpp/PropertyConfigurator.hh>
+#include <log4cpp/SimpleLayout.hh>
+#include "Functions.h"
+
 using namespace std;
 namespace po = boost::program_options;
 using namespace com::netspective::medigy;
-std::stringstream temp;
 int sysmin,sysmax,pulsemin,pulsemax,dismin,dismax;
-std::string domainid,deviceid;
 
-REGISTER_TOPIC_TRAITS(com::netspective::medigy::BloodPressure)
-
-bool parse_args(int argc, char* argv[])
-{
-  po::options_description desc("Available options for <bloodPressure-alarm> are");
-  desc.add_options()
-    ("help", "produce help message")
-    ("domain", po::value<std::string>(), "Device Domain")
-    ("device-id",po::value<std::string>(), "Device ID for identification")
-    ("systolic-low", po::value<int>(), "Systolic Low Pressure Alarm Specification - default <90")
-    ("systolic-high", po::value<int>(), "Systolic High Pressure Alarm Specification - default >140")
-    ("diatolic-low", po::value<int>(), "Diatolic Low Pressure Alarm Specification - default <60")
-    ("diatolic-high", po::value<int>(), "Diatolic High Pressure Alarm Specification - default >90")
-    ("pulse-rate-low", po::value<int>(), "Pulse Low Rate Alarm Specification - default <60")
-    ("pulse-rate-high", po::value<int>(), "Pulse High Rate Alarm Specification - default >90")
-    ;
-
-  try {
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
-
-    if (vm.count("help") || argc == 1) {
-      std::cout << desc << "\n";
-      return false;
-    }
-    
-    if (vm.count("domain"))
-      domainid = vm["domain"].as<std::string>();
-	
-    if (vm.count("device-id"))
-    {
-      deviceid = vm["device-id"].as<std::string>();
-      //string key ("{");
-      //size_t start,end;
-      //string key1 ("}");
-      //start=deviceid.rfind(key);
-      //end=deviceid.rfind(key1);
-      //deviceid = deviceid.substr(0,start)+deviceid.substr(start+1,end-start-1);
-      //cout<<"\n"<<deviceid;
-    }
-
-  
-    if (vm.count("systolic-low"))
-      sysmin = vm["systolic-low"].as<int>();
-    if (vm.count("systolic-high"))
-      sysmax = vm["systolic-high"].as<int>();
-	
-    if (vm.count("diatolic-low"))
-      dismin = vm["diatolic-low"].as<int>();
-    if (vm.count("diatolic-high"))
-      dismin = vm["diatolic-high"].as<int>();
-
-    if (vm.count("pulse-rate-low"))
-      pulsemin = vm["pulse-rate-low"].as<int>();
-    if (vm.count("pulse-rate-high"))
-      pulsemax = vm["pulse-rate-high"].as<int>();
-
-    }
-  
-  catch (...) {
-    std::cout << desc << "\n";
-    return false;
-  }
-  return true;
-}  
+std::stringstream temp,prtemp;
+string domainid,deviceid,loginfo,logdata,logconfpath;
 
 int main(int argc, char* argv[]) 
 {
-	sysmin = 90;
-	sysmax = 140;
-	dismin = 60;
-	dismax = 90;
-	pulsemin = 60;
-	pulsemax = 90;
-	if (!parse_args(argc, argv))
-    	return 1;
-	SimpleDDS *simpledds;
+	 sysmin = 90;
+	 sysmax = 140;
+	 dismin = 60;
+	 dismax = 90;
+	 pulsemin = 60;
+	 pulsemax = 90;
+	 if (!parse_args_bp_alarm(argc, argv,domainid,deviceid,sysmin,sysmax,dismin,dismax,pulsemin,pulsemax,loginfo,logdata,logconfpath))
+    	 return 1;
+
+	 /*Importing log4cpp configuration and Creating category*/
+	 log4cpp::Category &log_root = log4cpp::Category::getRoot();
+         log4cpp::Category &bloodInfo = log4cpp::Category::getInstance( std::string(loginfo));
+         log4cpp::Category &bloodAlarm = log4cpp::Category::getInstance( std::string(logdata));
+         log4cpp::PropertyConfigurator::configure(logconfpath);
+         bloodInfo.notice(" Blood Pressure Alarm Subscriber Started " +deviceid);
+
+	 /*Initializing SimpleDDS library*/
+	 SimpleDDS *simpledds;
 	 BloodPressureTypeSupport_var typesupport;
-    	 DataReader_ptr reader;
+    	 DataReader_ptr content_reader;
     	 BloodPressureDataReader_var bpReader;
     	 ReturnCode_t status;
-	  int i=0;
-         //simpledds = new SimpleDDS();
+	 int i=0;
+         
+	 /*Setting QoS Properties for Topic*/
          DDS::TopicQos tQos;
          tQos.durability.kind=VOLATILE_DURABILITY_QOS;
          tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
@@ -110,15 +63,19 @@ int main(int argc, char* argv[])
          tQos.durability_service.history_depth= 1024;
          simpledds = new SimpleDDS(tQos);
 	 typesupport = new BloodPressureTypeSupport();
-    	 reader = simpledds->subscribe(typesupport);
-    	 bpReader = BloodPressureDataReader::_narrow(reader);
 
-    	 /* Read blood pressure values */
-    	 BloodPressureSeq  bpList;
+	 /*Creating content Filtered Subscriber*/
+	 StringSeq sSeqExpr;
+         sSeqExpr.length(0);
+	 content_reader = simpledds->filteredSubscribe(typesupport, deviceid ,devid , deviceid,sSeqExpr);
+
+    	 bpReader = BloodPressureDataReader::_narrow(content_reader);
+   	 BloodPressureSeq  bpList;
      	 SampleInfoSeq     infoSeq;
-    	 cout<<"Waiting to read bloodPressure data...\n";
 
-	while (1) 
+	 bloodInfo.notice("Blood Pressure alarm Subscriber for "+deviceid);
+	 bloodInfo.notice("Format: DEVICE_ID, MEASURED_TIME, SYSTOLIC, DIATOLIC, PULSERATE");
+	 while (1) 
 	 {
          	status = bpReader->take(
             	bpList,
@@ -134,29 +91,26 @@ int main(int argc, char* argv[])
           	}
 		for (i = 0; i < bpList.length(); i++) 
 		{
-			temp << bpList[i].deviceID;
-			if(strcmp(temp.str().c_str() , deviceid.c_str() ) == 0 )
+			
+			if(infoSeq[i].valid_data)
 			{
 			if (bpList[i].systolicPressure < sysmin || bpList[i].systolicPressure > sysmax || bpList[i].diastolicPressure < dismin || bpList[i].diastolicPressure > dismax || bpList[i].pulseRatePerMinute < pulsemin || bpList[i].pulseRatePerMinute > pulsemax)
 			{
-				cout<<"\nTime : "<<bpList[i].timeOfMeasurement;
-				cout<<"\nPatient Blood Pressure alarm ";
-				cout<<"\nSystolic: "<< bpList[i].systolicPressure;
-				cout<<"\nDiastolic: "<<bpList[i].diastolicPressure;
-				cout<<"\nPULSE: "<<bpList[i].pulseRatePerMinute;
+				prtemp <<bpList[i].deviceID <<", "<<bpList[i].timeOfMeasurement<<", "<< bpList[i].systolicPressure;
+				prtemp <<", "<<bpList[i].diastolicPressure<<", "<<bpList[i].pulseRatePerMinute;
+				bloodAlarm.info(prtemp.str().c_str());
+				prtemp.str("");
 			}
-			status = bpReader->return_loan(bpList, infoSeq);
-        		checkStatus(status, "return_loan");
-			}
-
-			temp.str("");
 			
+			}
 		}
+		status = bpReader->return_loan(bpList, infoSeq);
+        	checkStatus(status, "return_loan");
 	 	
     	}
-
+	bloodInfo.notice("Blood Pressure alarm Subscriber Ends");	
         /* We're done.  Delete everything */
-        simpledds->deleteReader(reader);
+        simpledds->deleteReader(content_reader);
         delete simpledds;
         return 0;
 }

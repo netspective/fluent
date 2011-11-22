@@ -9,11 +9,10 @@ function USAGE ()
     echo "    --domain  Device Domain"
     echo "    --device-id  Device ID to identify the particular device"
     echo "    --spawn  Number of publishers to run"
-    echo "    --log-path  Log file path"
     echo "    --log4cpp-conf  configration file path"
     echo ""
     echo "EXAMPLE:"
-    echo "  ./bp-pub.sh --domain=blood --device-id=A10 --spawn=5 --log-path=/var/log/netspective/blood/ --log4cpp-conf ../src/c++/production/conf/covidien.pub"
+    echo "  ./bp-pub.sh --domain=blood --device-id=BP --spawn=5 --log4cpp-conf ../src/c++/production/conf/simulation_log_bp.conf"
     echo ""
     exit $E_OPTERROR    # Exit and explain usage, if no argument(s) given.
 }
@@ -31,9 +30,6 @@ do
     	--spawn=*)
 		spawn=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
 		;;
-	--log-file=*)
-                logfile=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
-                ;;
 	--log4cpp-conf=*)
                 logfile=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
                 ;;
@@ -53,8 +49,8 @@ for (( j = 1 ; j <= $spawn; j++ ))
 do
 
 
-echo "./bp-pub --data-gen-ip 127.0.0.1 --domain $domain --device-id $deviceid{$j} --log-path /var/log/netspective/blood/ --log-category covidien.$domain.$deviceid{$j} --log-category-data covidien.$domain.$deviceid{$j}.data  --log4cpp-conf ../src/c++/production/conf/covidien.pub > /dev/null &"
-	./bp-pub --data-gen-ip 127.0.0.1 --domain $domain --device-id $deviceid{$j} --log-path /var/log/netspective/blood/ --log-category covidien.$domain.$deviceid{$j} --log-category-data covidien.$domain.$deviceid{$j}.data  --log4cpp-conf ../src/c++/production/conf/covidien.pub > /dev/null &
+echo "./bp-pub --data-gen-ip 127.0.0.1 --domain $domain --device-id $deviceid{$j} --log-info blood.info --log-data blood.data  --log4cpp-conf ../src/c++/production/conf/simulation_log_bp.conf > /dev/null &"
+./bp-pub --data-gen-ip 127.0.0.1 --domain $domain --device-id $deviceid{$j} --log-info blood.info --log-data blood.data  --log4cpp-conf ../src/c++/production/conf/simulation_log_bp.conf  > /dev/null &
 	
 	sleep 5
 

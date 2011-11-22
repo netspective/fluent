@@ -3,16 +3,16 @@ function USAGE ()
 {
     echo ""
     echo "USAGE: "
-    echo "    Temperature Monitor Publisher"
+    echo "    BloodPressure Publisher"
     echo ""
     echo "OPTIONS:"
     echo "    --domain  Device Domain"
     echo "    --device-id  Device ID to identify the particular device"
     echo "    --spawn  Number of publishers to run"
-    echo "    --log-file  Log file path"
+    echo "    --log4cpp-conf  configration file path"
     echo ""
     echo "EXAMPLE:"
-    echo "    tempmonitor-pub.sh --domain=tempmonitor --device-id=A10 --spawn=100 --log-file=/var/log/netspective/"
+    echo "./tempmonitor-pub.sh --domain=tempmonitor --device-id=temP --spawn=5 --log4cpp-conf ../src/c++/production/conf/simulation_log_temp.conf"
     echo ""
     exit $E_OPTERROR    # Exit and explain usage, if no argument(s) given.
 }
@@ -30,7 +30,7 @@ do
     	--spawn=*)
 		spawn=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
 		;;
-	--log-file=*)
+	--log4cpp-conf=*)
                 logfile=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
                 ;;
     	--default)
@@ -44,10 +44,14 @@ if [ $# -eq 0 ] ; then
     USAGE
 fi
 
-rm -f /var/log/netspective/*
+rm -f /var/log/netspective/blood/*
 for (( j = 1 ; j <= $spawn; j++ ))
 do
-	echo "./tempmonitor-pub --domain $domain --device-id $deviceid{$j} --log-file $logfile/tempmonitor-pub-deviceid{$j}.log"
-	./tempmonitor-pub --domain $domain --device-id $deviceid{$j} --log-file /var/log/netspective/tempmonitor-pub-$deviceid{$j}.log  > /dev/null &
+
+
+echo "./tempmonitor-pub --data-gen-ip 127.0.0.1 --domain $domain --device-id $deviceid{$j} --log-info temp.info --log-data temp.data  --log4cpp-conf ../src/c++/production/conf/simulation_log_temp.conf > /dev/null &"
+	./tempmonitor-pub --data-gen-ip 127.0.0.1 --domain $domain --device-id $deviceid{$j} --log-info temp.info --log-data temp.data  --log4cpp-conf ../src/c++/production/conf/simulation_log_temp.conf > /dev/null &
+	
 	sleep 5
+
 done

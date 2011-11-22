@@ -1,6 +1,0 @@
-log4j.rootCategory=INFO, infoFILE
-appender.infoFILE=org.apache.log4j.FileAppender
-appender.infoFILE.fileName=/var/log/netspective/blood/bp.sub.info.log
-appender.infoFILE.layout=org.apache.log4j.PatternLayout
-appender.infoFILE.layout.ConversionPattern=%d %-5p %c - %m%n
-

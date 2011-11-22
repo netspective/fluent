@@ -11,79 +11,48 @@
 #include <dds/topic.hpp>
 #include <dds/reader.hpp>
 #include <dds/traits.hpp>
+#include "Functions.h"
+/*Log4cpp Library*/
+#include <log4cpp/Category.hh>
+#include <log4cpp/FileAppender.hh>
+#include <log4cpp/PropertyConfigurator.hh>
+#include <log4cpp/SimpleLayout.hh>
+#define devid "deviceID"
+
 using namespace DDS;
 using namespace std;
 namespace po = boost::program_options;
 using namespace com::netspective::medigy;
-std::stringstream temp;
-std::string domainid,deviceid;
-
+stringstream temp,prtemp;
+string domainid,deviceid,loginfo,logdata,logconfpath;
 int splow,sphigh;
-bool parse_args(int argc, char* argv[])
-{
-  po::options_description desc("Available options for <pulseoximeter-alarm> are");
-  desc.add_options()
-    ("help", "produce help message")
-    ("domain", po::value<std::string>(), "Device Domain")
-    ("device-id",po::value<std::string>(), "Device ID for identification")
-    ("spo2-low", po::value<int>(), "SPO2 Low level Alarm Alarm Specification - default <88")
-    ("spo2-high", po::value<int>(), "SPO2 High Level Alarm Specification - default >92")
-    ;
 
-  try {
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
-
-    if (vm.count("help") || argc == 1) {
-      std::cout << desc << "\n";
-      return false;
-    }
-    
-    if (vm.count("domain"))
-      domainid = vm["domain"].as<std::string>();
-	
-    if (vm.count("device-id"))
-    {
-      deviceid = vm["device-id"].as<std::string>();
-      //string key ("{");
-      //size_t start,end;
-      //string key1 ("}");
-      //start=deviceid.rfind(key);
-      //end=deviceid.rfind(key1);
-      //deviceid = deviceid.substr(0,start)+deviceid.substr(start+1,end-start-1);
-      //cout<<"\n"<<deviceid;
-    }
-
-  
-    if (vm.count("spo2-low"))
-      splow = vm["spo2-low"].as<int>();
-    if (vm.count("spo2-high"))
-      sphigh = vm["spo2-high"].as<int>();
-	
-    
-    }
-  
-  catch (...) {
-    std::cout << desc << "\n";
-    return false;
-  }
-  return true;
-} 
 
 
 int main(int argc, char* argv[]) 
 {
 	splow=88;
 	sphigh=92;
-	if (!parse_args(argc, argv))
+
+	if (!parse_args_pulse_alarm(argc,argv,domainid,deviceid,loginfo,logdata,logconfpath,splow,sphigh))
     	return 1;
+	
+	/*Importing log4cpp configuration and Creating category*/
+        log4cpp::Category &log_root = log4cpp::Category::getRoot();
+        log4cpp::Category &pulseInfo = log4cpp::Category::getInstance( std::string(loginfo));
+        log4cpp::Category &pulseAlarm = log4cpp::Category::getInstance( std::string(logdata));
+        log4cpp::PropertyConfigurator::configure(logconfpath);
+        pulseInfo.notice(" PulseOximeter Alarm Subscriber Started");
+
+	/*Initializing SimpleDDS library*/	
 	SimpleDDS *simpledds;
 	PulseOximeterTypeSupport_var typesupport;
-    	DataReader_ptr reader;
+    	DataReader_ptr content_reader;
     	PulseOximeterDataReader_var bpReader;
     	ReturnCode_t status;
 	int i=0;
+
+	/*Setting QoS Properties for Topic*/
         DDS::TopicQos tQos;
         tQos.durability.kind=VOLATILE_DURABILITY_QOS;
         tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
@@ -92,10 +61,18 @@ int main(int argc, char* argv[])
         tQos.durability_service.history_depth= 1024;
         simpledds = new SimpleDDS(tQos);
 	typesupport = new PulseOximeterTypeSupport();
-    	reader = simpledds->subscribe(typesupport);
-    	bpReader = PulseOximeterDataReader::_narrow(reader);
+
+	/*Creating content Filtered Subscriber*/
+	StringSeq sSeqExpr;
+        sSeqExpr.length(0);
+	content_reader = simpledds->filteredSubscribe(typesupport, deviceid ,devid , deviceid,sSeqExpr);
+    	bpReader = PulseOximeterDataReader::_narrow(content_reader);
    	PulseOximeterSeq  bpList;
      	SampleInfoSeq     infoSeq;
+	pulseInfo.notice("pulse Oximeter Alarm Subscriber for "+deviceid);
+	pulseInfo.notice("Format: DEVICE_ID, MEASURED_TIME, SPO2, PUSLERATE");
+	
+	/*Receiving Data from DDS */	
 	while (1) 
 	{
          	status = bpReader->take(
@@ -112,23 +89,28 @@ int main(int argc, char* argv[])
           	}
           	for (i = 0; i < bpList.length(); i++) 
 	  	{
-			temp << bpList[i].deviceID;
-			if(strcmp(temp.str().c_str() , deviceid.c_str() ) == 0 )
+
+			if(infoSeq[i].valid_data)
 			{
 				if (bpList[i].SPO2 <  splow || bpList[i].SPO2 > sphigh)
 				{
-					std::cout << "\n SPO2 alarm : " << bpList[i].SPO2;
+					prtemp <<bpList[i].deviceID<<", "<<bpList[i].timeOfMeasurement<<", ";
+			 		prtemp <<bpList[i].SPO2<<", "<< bpList[i].pulseRatePerMinute;
+			 		pulseAlarm.info(prtemp.str().c_str());
+					prtemp.str("");
 				}
-				status = bpReader->return_loan(bpList, infoSeq);
-        			checkStatus(status, "return_loan");
+				
 			}
-			temp.str("");
-			sleep(1);
+
 		}
+		status = bpReader->return_loan(bpList, infoSeq);
+        	checkStatus(status, "return_loan");
 		
     	}
+
+	pulseInfo.notice("PulseOximeter Alarm Subscriber Ends "+deviceid);	
         /* We're done.  Delete everything */
-        simpledds->deleteReader(reader);
+        simpledds->deleteReader(content_reader);
         delete simpledds;
         return 0;
 }

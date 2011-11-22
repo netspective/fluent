@@ -9,84 +9,50 @@
 #include <dds/topic.hpp>
 #include <dds/reader.hpp>
 #include <dds/traits.hpp>
+#include "Functions.h"
+#include <log4cpp/Category.hh>
+#include <log4cpp/FileAppender.hh>
+#include <log4cpp/PropertyConfigurator.hh>
+#include <log4cpp/SimpleLayout.hh>
+#define devid "deviceID"
+
 using namespace DDS;
 using namespace std;
 namespace po = boost::program_options;
 using namespace com::netspective::medigy;
-std::stringstream temp;
-std::string domainid,deviceid;
+stringstream temp,prtemp;
+string domainid,deviceid,loginfo,logdata,logconfpath;
 int templow,temphigh,avgtime;
-bool parse_args(int argc, char* argv[])
-{
-  po::options_description desc("Available options for <Temperature Monitor> are");
-  desc.add_options()
-    ("help", "produce help message")
-    ("domain", po::value<std::string>(), "Device Domain")
-    ("device-id",po::value<std::string>(), "Device ID for identification")
-    ("avg-time-period",po::value<int>(), "Average time period for tempetature - default 1 min")
-    ("temp-low", po::value<int>(), "Temperature Low level Alarm Alarm Specification - default <88")
-    ("temp-high", po::value<int>(), "Temperature High Level Alarm Specification - default >92")
-    ;
 
-  try {
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
-
-    if (vm.count("help") || argc == 1) {
-      std::cout << desc << "\n";
-      return false;
-    }
-    
-    if (vm.count("domain"))
-      domainid = vm["domain"].as<std::string>();
-	
-    if (vm.count("device-id"))
-    {
-      deviceid = vm["device-id"].as<std::string>();
-      //string key ("{");
-      //size_t start,end;
-      //string key1 ("}");
-      //start=deviceid.rfind(key);
-      //end=deviceid.rfind(key1);
-      //deviceid = deviceid.substr(0,start)+deviceid.substr(start+1,end-start-1);
-      //cout<<"\n"<<deviceid;
-    }
-    
-    if (vm.count("avg-time-period"))
-      avgtime = vm["avg-time-period"].as<int>();
-    if (vm.count("temp-low"))
-      templow = vm["temp-low"].as<int>();
-    if (vm.count("temp-high"))
-      temphigh = vm["temp-high"].as<int>();
-	
-    
-    }
-  
-  catch (...) {
-    std::cout << desc << "\n";
-    return false;
-  }
-  return true;
-} 
 
 
 int main(int argc, char* argv[]) 
 {
-	long timestart,timeend=0,avg=0;
-	int nrecord=0;
-	avgtime=1;
-	templow=88;
-	temphigh=92;
-	if (!parse_args(argc, argv))
-    	return 1;
+	 long timestart,timeend=0,avg=0;
+	 int nrecord=0;
+	 avgtime=1;
+	 templow=88;
+	 temphigh=92;
 
+	 if (!parse_args_temp_alarm(argc,argv,domainid,deviceid,loginfo,logdata,logconfpath,avgtime,templow,temphigh))
+    	 return 1;
+
+	 /*Importing log4cpp configuration and Creating category*/
+         log4cpp::Category &log_root = log4cpp::Category::getRoot();
+         log4cpp::Category &tempInfo = log4cpp::Category::getInstance( std::string(loginfo));
+         log4cpp::Category &tempAlarm = log4cpp::Category::getInstance( std::string(logdata));
+         log4cpp::PropertyConfigurator::configure(logconfpath);
+         tempInfo.notice(" Temperature Monitor Alarm Subscriber Started");
+
+ 	 /*Initializing SimpleDDS library*/
 	 SimpleDDS *simpledds;
 	 TempMonitorTypeSupport_var typesupport;
-    	 DataReader_ptr reader;
+    	 DataReader_ptr content_reader;
     	 TempMonitorDataReader_var bpReader;
     	 ReturnCode_t status;
 	 int i=0;
+
+	 /*Setting QoS Properties for Topic*/
          DDS::TopicQos tQos;
          tQos.durability.kind=VOLATILE_DURABILITY_QOS;
          tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
@@ -95,10 +61,18 @@ int main(int argc, char* argv[])
          tQos.durability_service.history_depth= 1024;
          simpledds = new SimpleDDS(tQos);
 	 typesupport = new TempMonitorTypeSupport();
-    	 reader = simpledds->subscribe(typesupport);
-    	 bpReader = TempMonitorDataReader::_narrow(reader);
+
+	 /*Creating content Filtered Subscriber*/
+	 StringSeq sSeqExpr;
+         sSeqExpr.length(0);
+	 content_reader = simpledds->filteredSubscribe(typesupport, deviceid ,devid , deviceid,sSeqExpr);
+    	 bpReader = TempMonitorDataReader::_narrow(content_reader);
    	 TempMonitorSeq  bpList;
      	 SampleInfoSeq     infoSeq;
+	 tempInfo.notice("Temerature Monitor Alarm Subscriber for "+deviceid);
+	 tempInfo.notice("Format: DEVICE_ID, START_TIME, END_TIME,TEMPERATURE");
+
+	 /*Receiving Data from DDS */
 	 while (1) 
 	 {
          	status = bpReader->take(
@@ -115,8 +89,8 @@ int main(int argc, char* argv[])
           	}
           	for (i = 0; i < bpList.length(); i++) 
 	  	{
-			temp << bpList[i].deviceID;
-			if(strcmp(temp.str().c_str() , deviceid.c_str() ) == 0 )
+
+			if(infoSeq[i].valid_data)
 			{
 	
 				avg+=(long)bpList[i].temp;
@@ -132,22 +106,27 @@ int main(int argc, char* argv[])
 						avg=avg/nrecord;
 						if(avg < templow || avg > temphigh)
 						{
-		                                       	cout<<"\nStart Time : "<<timestart<<" End Time : "<<timeend;
-							cout<<"\nTemperature : "<<avg;
+							prtemp <<bpList[i].deviceID<<", "<<timestart<<", "<<timeend<<", "<<avg;
+			 				tempAlarm.info(prtemp.str().c_str());
+							prtemp.str("");
+							
 						}
 						nrecord = -1;
 	                               }
 	                         }
-				status = bpReader->return_loan(bpList, infoSeq);
-        			checkStatus(status, "return_loan");
+				
 			}
-			sleep(1);
+
+
 		}
+		status = bpReader->return_loan(bpList, infoSeq);
+        	checkStatus(status, "return_loan");
 		nrecord++;
 		
     	}
         /* We're done.  Delete everything */
-        simpledds->deleteReader(reader);
+	tempInfo.notice("Temperature Alarm Subscriber Ends "+deviceid);
+        simpledds->deleteReader(content_reader);
         delete simpledds;
         return 0;
 }

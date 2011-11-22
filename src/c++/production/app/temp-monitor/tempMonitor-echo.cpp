@@ -15,29 +15,31 @@
 #include <log4cpp/FileAppender.hh>
 #include <log4cpp/PropertyConfigurator.hh>
 #include <log4cpp/SimpleLayout.hh>
-
+#define devid "deviceID"
 
 using namespace DDS;
 using namespace std;
 namespace po = boost::program_options;
 using namespace com::netspective::medigy;
 std::stringstream temp,prtemp;
-string domainid,deviceid,logfile,logconfpath;
+string domainid,deviceid,loginfo,logdata,logconfpath;
 
 int main(int argc, char* argv[]) 
 {
-	 if (!parse_args_sub(argc, argv,domainid,deviceid,logfile,logconfpath))
+	 if (!parse_args_sub(argc, argv,domainid,deviceid,loginfo,logdata,logconfpath))
     	 return 1;
 	 
 	 /*Importing log4cpp configuration and Creating category*/
+         log4cpp::Category &log_root = log4cpp::Category::getRoot();
+         log4cpp::Category &tempInfo = log4cpp::Category::getInstance( std::string(loginfo));
+         log4cpp::Category &tempEcho = log4cpp::Category::getInstance( std::string(logdata));
          log4cpp::PropertyConfigurator::configure(logconfpath);
-         log4cpp::Category& category = log4cpp::Category::getInstance(domainid+"."+deviceid);
-         category.info(" Temperature Monitor Subscriber Started");
+         tempInfo.notice(" Temperature Monitor Subscriber Started");
 	
  	 /*Initializing SimpleDDS library*/
 	 SimpleDDS *simpledds;
 	 TempMonitorTypeSupport_var typesupport;
-    	 DataReader_ptr reader;
+    	 DataReader_ptr content_reader;
     	 TempMonitorDataReader_var bpReader;
     	 ReturnCode_t status;
 	 int i=0;
@@ -53,11 +55,17 @@ int main(int argc, char* argv[])
 	 /*Initializing Subsciber and DataWriter*/
          simpledds = new SimpleDDS(tQos);
 	 typesupport = new TempMonitorTypeSupport();
-    	 reader = simpledds->subscribe(typesupport);
-    	 bpReader = TempMonitorDataReader::_narrow(reader);
+    	 
+	 /*Creating content Filtered Subscriber*/
+	 StringSeq sSeqExpr;
+         sSeqExpr.length(0);
+	 content_reader = simpledds->filteredSubscribe(typesupport, deviceid ,devid , deviceid,sSeqExpr);
+    	 
+	 bpReader = TempMonitorDataReader::_narrow(content_reader);
    	 TempMonitorSeq  bpList;
      	 SampleInfoSeq     infoSeq;
-
+	 tempInfo.notice("Temerature Monitor Subscriber for "+deviceid);
+	 tempInfo.notice("Format: DEVICE_ID, MEASURED_TIME, TEMPERATURE");
 	 /*Receiving Data from DDS */		 
 	 while (1) 
 	 {
@@ -75,16 +83,15 @@ int main(int argc, char* argv[])
           	}
           	for (i = 0; i < bpList.length(); i++) 
 	  	{
-			temp << bpList[i].deviceID;
-			if(strcmp(temp.str().c_str() , deviceid.c_str() ) == 0 )
+			if(infoSeq[i].valid_data)
 			{
-				prtemp <<"Measured Time : " << bpList[i].timeOfMeasurement<<" Temp :"<< bpList[i].temp;
-				category.info(prtemp.str().c_str());
+				prtemp <<bpList[i].deviceID<<", "<<bpList[i].timeOfMeasurement<<", "<<bpList[i].temp;
+			 	tempEcho.info(prtemp.str().c_str());
 				prtemp.str("");
-				status = bpReader->return_loan(bpList, infoSeq);
-       				checkStatus(status, "return_loan");
+				
 			}
-			temp.str("");
+			status = bpReader->return_loan(bpList, infoSeq);
+       			checkStatus(status, "return_loan");
 			sleep(1);
 			
 
@@ -92,7 +99,8 @@ int main(int argc, char* argv[])
 		
 	}
 	/* We're done.  Delete everything */
-        simpledds->deleteReader(reader);
+	tempInfo.notice("Temperature Monitor Ends "+deviceid);
+        simpledds->deleteReader(content_reader);
         delete simpledds;
         return 0;
 

@@ -16,6 +16,7 @@
 #include <boost/program_options.hpp>
 #include <log4cpp/PropertyConfigurator.hh>
 #include "Functions.h"
+#include<log4cpp/Configurator.hh>
 
 using namespace DDS;
 using namespace std;
@@ -28,25 +29,21 @@ struct sockaddr_in serverAddress;
 struct hostent *hostInfo;
 char buf[1024], c;
 int sizebuf;
-string domainid,deviceid,logfile,logcate,logcatedata,logconfpath,hostip;
+string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
+stringstream prtemp;
 
 int main(int argc, char* argv[]) 
 {
 
-	if (!parse_args_pub(argc, argv,hostip,domainid,deviceid,logfile,logcate,logcatedata,logconfpath))
+	if (!parse_args_pub(argc, argv,hostip,domainid,deviceid,loginfo,logdata,logconfpath))
     	return 1;
 
 	/*Importing log4cpp configuration and Creating category*/
-	log4cpp::PropertyConfigurator::configure(replaceconfstring(logfile,logconfpath,logcate,logcatedata).c_str());
- 	remove(logcate.c_str());	
-	log4cpp::Category& category = log4cpp::Category::getInstance(logcate);
- 	log4cpp::Category& categoryData = log4cpp::Category::getInstance(logcatedata);
-	category.setAdditivity(true);
-	categoryData.setAdditivity(true);
- 	category.addAppender(log4cpp::Appender::getAppender(std::string("infoFILE")));
- 	categoryData.addAppender(log4cpp::Appender::getAppender(std::string("dataFILE")));
-        category.info(" Temp_Monitor Publisher Started");
-	category.info(" Temperature Monitor Publisher Started");
+	log4cpp::Category &log_root = log4cpp::Category::getRoot();
+        log4cpp::Category &tempInfo = log4cpp::Category::getInstance( std::string(loginfo));
+        log4cpp::Category &tempData = log4cpp::Category::getInstance( std::string(logdata));
+        log4cpp::PropertyConfigurator::configure(logconfpath);
+        tempInfo.notice("Temperature Monitor Publisher Started "+deviceid);
 	
 
 	/*Initializing SimpleDDS library*/
@@ -71,8 +68,8 @@ int main(int argc, char* argv[])
 	/*Intialiizing Socket Data*/
 	if (hostInfo == NULL) 
 	{
-		category.error(" Problem interpreting By HostInfo");
-		category.notice(": Temperature Monitor Publisher Ends ");	
+		tempInfo.error(" Problem interpreting By HostInfo");
+		tempInfo.notice(": Temperature Monitor Publisher Ends ");	
 		exit(1);
 	}
 	serverPort=5000;
@@ -80,20 +77,19 @@ int main(int argc, char* argv[])
 	socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 	if (socketDescriptor < 0) 
 	{
-		category.error(" Not able create the Socket");
-		category.notice(" Temperature Monitor Publisher Ends ");
+		tempInfo.error(" Not able create the Socket");
+		tempInfo.notice(" Temperature Monitor Publisher Ends ");
 		exit(1);
 	}
 	serverAddress.sin_family = hostInfo->h_addrtype;
-	memcpy((char *) &serverAddress.sin_addr.s_addr,
-			hostInfo->h_addr_list[0], hostInfo->h_length);
+	memcpy((char *) &serverAddress.sin_addr.s_addr,hostInfo->h_addr_list[0], hostInfo->h_length);
 	serverAddress.sin_port = htons(serverPort);
 
 	/*Binding Socket with Server Data Generator*/
 	if (connect(socketDescriptor,(struct sockaddr *) &serverAddress,sizeof(serverAddress)) < 0) 
 	{
-		category.error(" cannot connect with server");
-		category.info(" Temperature Monitor Publisher Ends ");
+		tempInfo.error(" cannot connect with server");
+		tempInfo.notice(" Temperature Monitor Publisher Ends ");
 		exit(1);
 	}
 	
@@ -101,8 +97,8 @@ int main(int argc, char* argv[])
 	strcpy(buf,"TEMPMONITOR");
 	if (send(socketDescriptor, buf, strlen(buf) + 1, 0) < 0)
 	{
-		category.error(" Not able to send data");
-		category.notice(" Temperature Monitor Publisher Ends ");
+		tempInfo.error(" Not able to send data");
+		tempInfo.notice(" Temperature Monitor Publisher Ends ");
 		close(socketDescriptor);
 		exit(1);
 	}
@@ -111,6 +107,8 @@ int main(int argc, char* argv[])
 	/*Storing Domain and Device ID*/
 	data.deviceID = DDS::string_dup(deviceid.c_str());
 	data.deviceDomain = DDS::string_dup(domainid.c_str());
+	tempInfo.notice("Temperature Monitor  Started Publishing Data In DDS");
+        tempInfo.notice("Format: TIMEOFMEASURED, TEMPERATURE");
 	
 	while (1) 
 	{
@@ -118,18 +116,21 @@ int main(int argc, char* argv[])
 		while ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
 		{
 			buf[sizebuf] = '\0';
-			categoryData.info(buf);
 			char * pch;
 			pch = strtok (buf,":");
 			data.timeOfMeasurement = atol(pch);
+			prtemp<<data.timeOfMeasurement<<", ";
 			pch = strtok (NULL, ":");
 			data.temp = (short)atoi(pch);
+			prtemp<<data.temp;
+			tempData.info(prtemp.str().c_str());
 			bpWriter->write(data, NULL);
+			prtemp.str("");
 		}
 	}
 
 	/*Deleting SimpleDDS Instance*/
-	category.notice(" Temperature Monitor Publisher Ends ");
+	tempInfo.notice(" Temperature Monitor Publisher Ends "+deviceid);
 	simpledds->deleteWriter(writer);
 	delete simpledds;
 	return 0;

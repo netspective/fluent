@@ -11,7 +11,7 @@ namespace po = boost::program_options;
 
 
 
-bool parse_args_pub(int argc, char* argv[],string &hostip, string &domainid,string &deviceid,string &logfile,string &logcate,string &logcatedata,string &logconfpath)
+bool parse_args_pub(int argc, char* argv[],string &hostip, string &domainid,string &deviceid,string &loginfo,string &logdata,string &logconfpath)
 {
   po::options_description desc("Available options for are");
   desc.add_options()
@@ -19,9 +19,8 @@ bool parse_args_pub(int argc, char* argv[],string &hostip, string &domainid,stri
     ("data-gen-ip", po::value<std::string>(), "Data Generator IP ")
     ("domain", po::value<std::string>(), "Device Domain ")
     ("device-id",po::value<std::string>(), "Device ID - for device identification")
-    ("log-path", po::value<std::string>(), "Log File Location")
-    ("log-category", po::value<std::string>(), "Log category Specification")
-    ("log-category-data", po::value<std::string>(), "Log category data Specification ")
+    ("log-info", po::value<std::string>(), "Log Info Specification")
+    ("log-data", po::value<std::string>(), "Log Data Specification ")
     ("log4cpp-conf", po::value<std::string>(), "Log Configration and Format specification file")
     ;
  
@@ -41,12 +40,10 @@ bool parse_args_pub(int argc, char* argv[],string &hostip, string &domainid,stri
       domainid = vm["domain"].as<std::string>();
     if (vm.count("device-id")) 
       deviceid = vm["device-id"].as<std::string>();
-    if (vm.count("log-path")) 
-      logfile = vm["log-path"].as<std::string>();
-    if (vm.count("log-category")) 
-      logcate = vm["log-category"].as<std::string>();
-    if (vm.count("log-category-data")) 
-      logcatedata = vm["log-category-data"].as<std::string>();
+    if (vm.count("log-info")) 
+      loginfo = vm["log-info"].as<std::string>();
+    if (vm.count("log-data")) 
+      logdata = vm["log-data"].as<std::string>();
     if (vm.count("log4cpp-conf")) 
       logconfpath = vm["log4cpp-conf"].as<std::string>();
     
@@ -58,14 +55,15 @@ bool parse_args_pub(int argc, char* argv[],string &hostip, string &domainid,stri
   return true;
 }
 
-bool parse_args_sub(int argc, char* argv[],string &domainid,string &deviceid,string &logfile,string &logconfpath)
+bool parse_args_sub(int argc, char* argv[],string &domainid,string &deviceid,string &loginfo,string &logdata,string &logconfpath)
 {
   po::options_description desc("Available options for are");
   desc.add_options()
     ("help", "produce help message")
     ("domain", po::value<std::string>(), "Device Domain")
     ("device-id",po::value<std::string>(), "Device ID for identification")
-    ("log-file", po::value<std::string>(), "Log File Location")
+    ("log-info", po::value<std::string>(), "Log Info Specification")
+    ("log-data", po::value<std::string>(), "Log data Specification ")
     ("log4cpp-conf", po::value<std::string>(), "Log Configration and Format specification file")
     ;
 
@@ -83,8 +81,10 @@ bool parse_args_sub(int argc, char* argv[],string &domainid,string &deviceid,str
       domainid = vm["domain"].as<std::string>();
     if (vm.count("device-id"))
       deviceid = vm["device-id"].as<std::string>();
-    if (vm.count("log-file"))
-       logfile = vm["log-file"].as<std::string>();
+    if (vm.count("log-info"))
+      loginfo = vm["log-info"].as<std::string>();
+    if (vm.count("log-data"))
+      logdata = vm["log-data"].as<std::string>();
     if (vm.count("log4cpp-conf"))
       logconfpath = vm["log4cpp-conf"].as<std::string>();
 	   
@@ -98,38 +98,167 @@ bool parse_args_sub(int argc, char* argv[],string &domainid,string &deviceid,str
   return true;
 }
 
-string replaceconfstring(string logfile,string filename,string infostring,string datastring)
- {
-   string search_string = "INFOFILENAME";
-   string search_stringdata = "DATAFILENAME";
-   string inbuf;
-   fstream stream(filename.c_str(),ios::in);
-   ofstream fout(infostring.c_str());
-   while(!stream.eof())
-   {
-       getline(stream, inbuf);
-       int spot = inbuf.find(search_string);
-       if(spot >= 0)
-       {
-          string tmpstring = inbuf.substr(0,spot);
-          //tmpstring += infostring;
-          tmpstring = tmpstring+logfile+"/"+infostring;
-          tmpstring += inbuf.substr(spot+search_string.length(), inbuf.length());
-          inbuf = tmpstring;
-       }
 
-	spot = inbuf.find(search_stringdata);
-       if(spot >= 0)
-       {
-          string tmpstring = inbuf.substr(0,spot);
-          //tmpstring += datastring;
-          tmpstring = tmpstring+logfile+"/"+datastring;
-          tmpstring += inbuf.substr(spot+search_string.length(), inbuf.length());
-          inbuf = tmpstring;
-       }
-        fout<<inbuf<<endl;
-   }
-	  fout.close();
-	return infostring;
- }
- 
+
+
+bool parse_args_bp_alarm(int argc, char* argv[],string &domainid,string &deviceid,int &sysmin,int &sysmax,int &dismin,int &dismax,int &pulsemin,int &pulsemax,string &loginfo,string &logdata,string &logconfpath)
+{
+  po::options_description desc("Available options for <bloodPressure-alarm> are");
+  desc.add_options()
+    ("help", "produce help message")
+    ("domain", po::value<std::string>(), "Device Domain")
+    ("device-id",po::value<std::string>(), "Device ID for identification")
+    ("log-info", po::value<std::string>(), "Log Info Specification")
+    ("log-data", po::value<std::string>(), "Log data Specification ")
+    ("log4cpp-conf", po::value<std::string>(), "Log Configration and Format specification file")
+    ("systolic-low", po::value<int>(), "Systolic Low Pressure Alarm Specification - default <90")
+    ("systolic-high", po::value<int>(), "Systolic High Pressure Alarm Specification - default >140")
+    ("diatolic-low", po::value<int>(), "Diatolic Low Pressure Alarm Specification - default <60")
+    ("diatolic-high", po::value<int>(), "Diatolic High Pressure Alarm Specification - default >90")
+    ("pulse-rate-low", po::value<int>(), "Pulse Low Rate Alarm Specification - default <60")
+    ("pulse-rate-high", po::value<int>(), "Pulse High Rate Alarm Specification - default >90")
+    ;
+
+  try {
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help") || argc == 1) {
+      std::cout << desc << "\n";
+      return false;
+    }
+    
+    if (vm.count("domain"))
+      domainid = vm["domain"].as<std::string>();
+    if (vm.count("device-id"))
+       deviceid = vm["device-id"].as<std::string>();
+    if (vm.count("log-info"))
+      loginfo = vm["log-info"].as<std::string>();
+    if (vm.count("log-data"))
+      logdata = vm["log-data"].as<std::string>();
+    if (vm.count("log4cpp-conf"))
+      logconfpath = vm["log4cpp-conf"].as<std::string>();
+    if (vm.count("systolic-low"))
+      sysmin = vm["systolic-low"].as<int>();
+    if (vm.count("systolic-high"))
+      sysmax = vm["systolic-high"].as<int>();
+    if (vm.count("diatolic-low"))
+      dismin = vm["diatolic-low"].as<int>();
+    if (vm.count("diatolic-high"))
+      dismin = vm["diatolic-high"].as<int>();
+    if (vm.count("pulse-rate-low"))
+      pulsemin = vm["pulse-rate-low"].as<int>();
+    if (vm.count("pulse-rate-high"))
+      pulsemax = vm["pulse-rate-high"].as<int>();
+
+    }
+  
+  catch (...) {
+    std::cout << desc << "\n";
+    return false;
+  }
+  return true;
+}  
+
+bool parse_args_pulse_alarm(int argc, char* argv[],string &domainid,string &deviceid,string &loginfo,string &logdata,string &logconfpath,int &splow,int &sphigh)
+{
+  po::options_description desc("Available options for <pulseoximeter-alarm> are");
+  desc.add_options()
+    ("help", "produce help message")
+    ("domain", po::value<std::string>(), "Device Domain")
+    ("device-id",po::value<std::string>(), "Device ID for identification")
+    ("log-info", po::value<std::string>(), "Log Info Specification")
+    ("log-data", po::value<std::string>(), "Log data Specification ")
+    ("log4cpp-conf", po::value<std::string>(), "Log Configration and Format specification file")
+    ("spo2-low", po::value<int>(), "SPO2 Low level Alarm Alarm Specification - default <88")
+    ("spo2-high", po::value<int>(), "SPO2 High Level Alarm Specification - default >92")
+    ;
+
+  try {
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help") || argc == 1) {
+      std::cout << desc << "\n";
+      return false;
+    }
+    
+    if (vm.count("domain"))
+      domainid = vm["domain"].as<std::string>();
+    if (vm.count("device-id"))
+      deviceid = vm["device-id"].as<std::string>();
+    if (vm.count("log-info")) 
+      loginfo = vm["log-info"].as<std::string>();
+    if (vm.count("log-data")) 
+      logdata = vm["log-data"].as<std::string>();
+    if (vm.count("log4cpp-conf")) 
+      logconfpath = vm["log4cpp-conf"].as<std::string>();
+    if (vm.count("spo2-low"))
+      splow = vm["spo2-low"].as<int>();
+    if (vm.count("spo2-high"))
+      sphigh = vm["spo2-high"].as<int>();
+	
+    
+    }
+  
+  catch (...) {
+    std::cout << desc << "\n";
+    return false;
+  }
+  return true;
+} 
+
+bool parse_args_temp_alarm(int argc, char* argv[],string &domainid,string &deviceid,string &loginfo,string &logdata,string &logconfpath,int &avgtime,int &templow,int &temphigh)
+{
+  po::options_description desc("Available options for <Temperature Monitor> are");
+  desc.add_options()
+    ("help", "produce help message")
+    ("domain", po::value<std::string>(), "Device Domain")
+    ("device-id",po::value<std::string>(), "Device ID for identification")
+    ("log-info", po::value<std::string>(), "Log Info Specification")
+    ("log-data", po::value<std::string>(), "Log data Specification ")
+    ("log4cpp-conf", po::value<std::string>(), "Log Configration and Format specification file")
+    ("avg-time-period",po::value<int>(), "Average time period for tempetature - default 1 min")
+    ("temp-low", po::value<int>(), "Temperature Low level Alarm Alarm Specification - default <88")
+    ("temp-high", po::value<int>(), "Temperature High Level Alarm Specification - default >92")
+    ;
+
+  try {
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help") || argc == 1) {
+      std::cout << desc << "\n";
+      return false;
+    }
+    
+    if (vm.count("domain"))
+      domainid = vm["domain"].as<std::string>();
+    if (vm.count("device-id"))
+      deviceid = vm["device-id"].as<std::string>();
+    if (vm.count("log-info")) 
+      loginfo = vm["log-info"].as<std::string>();
+    if (vm.count("log-data")) 
+      logdata = vm["log-data"].as<std::string>();
+    if (vm.count("log4cpp-conf")) 
+      logconfpath = vm["log4cpp-conf"].as<std::string>();
+    if (vm.count("avg-time-period"))
+      avgtime = vm["avg-time-period"].as<int>();
+    if (vm.count("temp-low"))
+      templow = vm["temp-low"].as<int>();
+    if (vm.count("temp-high"))
+      temphigh = vm["temp-high"].as<int>();
+	
+    
+    }
+  
+  catch (...) {
+    std::cout << desc << "\n";
+    return false;
+  }
+  return true;
+} 
+

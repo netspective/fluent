@@ -10,12 +10,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctime>
-#include <log4cpp/Category.hh>
-#include <log4cpp/FileAppender.hh>
-#include <log4cpp/PropertyConfigurator.hh>
-#include <log4cpp/SimpleLayout.hh>
 #include <boost/program_options.hpp>
 #include "Functions.h"
+#include <log4cpp/Category.hh>
+#include <log4cpp/PropertyConfigurator.hh>
+#include <log4cpp/Configurator.hh>
 
 using namespace DDS;
 using namespace std;
@@ -28,23 +27,19 @@ struct sockaddr_in serverAddress;
 struct hostent *hostInfo;
 char buf[1024], c;
 int spawn,flag,sizebuf;
-string domainid,deviceid,logfile,logcate,logcatedata,logconfpath,hostip;
-
+string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
+stringstream prtemp;
 int main(int argc, char* argv[]) 
 {
-	if (!parse_args_pub(argc, argv,hostip,domainid,deviceid,logfile,logcate,logcatedata,logconfpath))
+	if (!parse_args_pub(argc, argv,hostip,domainid,deviceid,loginfo,logdata,logconfpath))
     	return 1;
-
+	
 	/*Importing log4cpp configuration and Creating category*/
-	log4cpp::PropertyConfigurator::configure(replaceconfstring(logfile,logconfpath,logcate,logcatedata).c_str());
- 	remove(logcate.c_str());	
-	log4cpp::Category& category = log4cpp::Category::getInstance(logcate);
- 	log4cpp::Category& categoryData = log4cpp::Category::getInstance(logcatedata);
-	category.setAdditivity(true);
-	categoryData.setAdditivity(true);
- 	category.addAppender(log4cpp::Appender::getAppender(std::string("infoFILE")));
- 	categoryData.addAppender(log4cpp::Appender::getAppender(std::string("dataFILE")));
-	category.info(" Blood Pressure Publisher Started");
+	log4cpp::Category &log_root = log4cpp::Category::getRoot();
+    	log4cpp::Category &bloodInfo = log4cpp::Category::getInstance( std::string(loginfo));
+    	log4cpp::Category &bloodData = log4cpp::Category::getInstance( std::string(logdata));
+	log4cpp::PropertyConfigurator::configure(logconfpath);
+	bloodInfo.notice(" Blood Pressure Publisher Started "+deviceid);
 	
 	/*Initializing SimpleDDS library*/
 	SimpleDDS *simpledds;
@@ -68,8 +63,8 @@ int main(int argc, char* argv[])
 	/*Initializing Socket Data*/
 	if (hostInfo == NULL) 
 	{
-		category.error(" Problem interpreting By HostInfo");
-		category.notice(" BloodPressure Publisher Ends");	
+		bloodInfo.error(" Problem interpreting By HostInfo");
+		bloodInfo.notice(" BloodPressure Publisher Ends");	
 		exit(1);
 	}
 	serverPort=5000;
@@ -77,8 +72,8 @@ int main(int argc, char* argv[])
 	socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 	if (socketDescriptor < 0) 
 	{
-		category.error(" Not able create the Socket");
-		category.notice(" BloodPressure Publisher Ends");	
+		bloodInfo.error(" Not able create the Socket");
+		bloodInfo.notice(" BloodPressure Publisher Ends");	
 		exit(1);
 	}
 	serverAddress.sin_family = hostInfo->h_addrtype;
@@ -88,8 +83,8 @@ int main(int argc, char* argv[])
 	/*Binding Socket with Server Data Generator*/
 	if (connect(socketDescriptor,(struct sockaddr *) &serverAddress,sizeof(serverAddress)) < 0) 
 	{
-		category.error(" cannot connect with server");
-		category.notice(" BloodPressure Publisher Ends at ");
+		bloodInfo.error(" cannot connect with server");
+		bloodInfo.notice(" BloodPressure Publisher Ends at ");
 		exit(1);
 	}
 
@@ -97,9 +92,9 @@ int main(int argc, char* argv[])
 	strcpy(buf,"BP");
 	if (send(socketDescriptor, buf, strlen(buf) + 1, 0) < 0)
 	{
-		category.error(" Not able to send data");
+		bloodInfo.error(" Not able to send data");
 		close(socketDescriptor);
-		category.notice(" BloodPressure Publisher Ends");
+		bloodInfo.notice(" BloodPressure Publisher Ends");
 		exit(1);
 	}
 
@@ -109,30 +104,36 @@ int main(int argc, char* argv[])
 	/*Storing Domain and Device ID*/
 	data.deviceID = DDS::string_dup(deviceid.c_str());
 	data.deviceDomain = DDS::string_dup(domainid.c_str());
-
+	bloodInfo.notice("Blood Pressure Started Publishing data in DDS");
+	bloodInfo.notice("Format: TIMEOFMEASURED, SYSTOLIC, DIATOLIC, PULSERATE");	
 	while (1) 
 	{
 		
 		while ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
 		{
 			buf[sizebuf]='\0';
-			categoryData.info(buf);
 			char * pch;
 			pch = strtok (buf,":");
 			data.timeOfMeasurement = atol(pch);
+			prtemp<<data.timeOfMeasurement<<", ";
 			pch = strtok (NULL, ":");
 			data.systolicPressure = (short)atoi(pch);		
+			prtemp<<data.systolicPressure<<", ";
 			pch = strtok (NULL, ":");
 			data.diastolicPressure = (short)atoi(pch);
+			prtemp<<data.diastolicPressure<<", ";
 			pch = strtok (NULL, ":");
 			data.pulseRatePerMinute = (short)atoi (pch);
+			prtemp<<data.pulseRatePerMinute;
+			bloodData.info(prtemp.str().c_str());
 			bpWriter->write(data, NULL);
+			prtemp.str("");
 		}
 
 	}
 	
 	/*Deleting SimpleDDS Instance*/
-	category.notice(" BloodPressure Publisher Ends");
+	bloodInfo.notice(" BloodPressure Publisher Ends");
 	simpledds->deleteWriter(writer);
 	delete simpledds;
 	return 0;

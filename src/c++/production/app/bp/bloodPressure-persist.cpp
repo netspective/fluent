@@ -14,74 +14,55 @@
 #include <dds/topic.hpp>
 #include <dds/reader.hpp>
 #include <dds/traits.hpp>
+#define devid "deviceID"
+
+/*Log4cpp Library*/
+#include <log4cpp/Category.hh>
+#include <log4cpp/FileAppender.hh>
+#include <log4cpp/PropertyConfigurator.hh>
+#include <log4cpp/SimpleLayout.hh>
+
+#include "Functions.h"
 
 using namespace mongo;
+using namespace std;
 namespace po = boost::program_options;
 using namespace com::netspective::medigy;
-std::stringstream temp;
-std::string domainid,deviceid;
-void run(long time,short bp,short lbp,short pr) 
+
+std::stringstream temp,prtemp;
+string domainid,deviceid,loginfo,logdata,logconfpath;
+
+void run(long time,short bp,short lbp,short pr,const char *deviceid) 
 {
 	DBClientConnection c;
 	c.connect("localhost");
-	BSONObj p = BSONObjBuilder().append("TimeStamp",(int)time).append("SystolicPressure",bp).append("DiastolicPressure",lbp).append("PulseRate",pr).obj();
-	c.insert("EMR.patients", p);
+	BSONObj p = BSONObjBuilder().append("TIMESTAMP",(int)time).append("SYSTOLIC",bp).append("DIASTOLIC",lbp).append("PULSERATE",pr).append("DEVICEID",deviceid).obj();
+	c.insert("EMR.BLOOD", p);
+
 }
-bool parse_args(int argc, char* argv[])
-{
-  po::options_description desc("Available options for <bloodPressure-echo> are");
-  desc.add_options()
-    ("help", "produce help message")
-    ("domain", po::value<std::string>(), "Device Domain")
-    ("device-id",po::value<std::string>(), "Device ID for identification")
-    ;
 
-  try {
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
-
-    if (vm.count("help") || argc == 1) {
-      std::cout << desc << "\n";
-      return false;
-    }
-
-    if (vm.count("domain"))
-      domainid = vm["domain"].as<std::string>();
-	
-    if (vm.count("device-id"))
-	{
-      deviceid = vm["device-id"].as<std::string>();
-	//string key ("{");
-        //size_t start,end;
-        //string key1 ("}");
-        //start=deviceid.rfind(key);
-        //end=deviceid.rfind(key1);
-        //deviceid = deviceid.substr(0,start)+deviceid.substr(start+1,end-start-1);
-        //cout<<"\n"<<deviceid;
-	}
-	   
-
-    }
-  
-  catch (...) {
-    std::cout << desc << "\n";
-    return false;
-  }
-  return true;
-} 
 
 int main(int argc, char* argv[]) 
 {
-	 if (!parse_args(argc, argv))
-    	 return 1;
-	SimpleDDS *simpledds;
+	 if (!parse_args_sub(argc, argv,domainid,deviceid,loginfo,logdata,logconfpath))
+    	 return 1;	
+
+	 /*Importing log4cpp configuration and Creating category*/
+	 log4cpp::Category &log_root = log4cpp::Category::getRoot();
+         log4cpp::Category &bloodInfo = log4cpp::Category::getInstance( std::string(loginfo));
+         log4cpp::Category &bloodPersist = log4cpp::Category::getInstance( std::string(logdata));
+         log4cpp::PropertyConfigurator::configure(logconfpath);
+         bloodInfo.notice(" Blood Pressure Persist Subscriber Started " +deviceid);
+
+
+	 SimpleDDS *simpledds;
 	 BloodPressureTypeSupport_var typesupport;
-    	 DataReader_ptr reader;
+    	 DataReader_ptr content_reader;
     	 BloodPressureDataReader_var bpReader;
     	 ReturnCode_t status;
-	  int i=0;
-         //simpledds = new SimpleDDS();
+	 int i=0;
+
+	 /*Setting QoS Properties for Topic*/
          DDS::TopicQos tQos;
          tQos.durability.kind=VOLATILE_DURABILITY_QOS;
          tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
@@ -90,15 +71,22 @@ int main(int argc, char* argv[])
          tQos.durability_service.history_depth= 1024;
          simpledds = new SimpleDDS(tQos);
 	 typesupport = new BloodPressureTypeSupport();
-    	 reader = simpledds->subscribe(typesupport);
-    	 bpReader = BloodPressureDataReader::_narrow(reader);
+	
+	 /*Creating content Filtered Subscriber*/
+	 StringSeq sSeqExpr;
+         sSeqExpr.length(0);
+	 content_reader = simpledds->filteredSubscribe(typesupport, deviceid ,devid , deviceid,sSeqExpr);
 
-    	 /* Read blood pressure values */
-    	 BloodPressureSeq  bpList;
+    	 bpReader = BloodPressureDataReader::_narrow(content_reader);
+   	 BloodPressureSeq  bpList;
      	 SampleInfoSeq     infoSeq;
-    	 cout<<"Waiting to read bloodPressure data...\n";
+
+	 bloodInfo.notice("Blood Pressure Persist Subscriber for "+deviceid);
+	 bloodInfo.notice("MONGODB Format: DEVICE_ID, MEASURED_TIME, SYSTOLIC, DIATOLIC, PULSERATE");
+
 	 while (1) 
 	{
+
         	status = bpReader->take(
        		bpList,
        		infoSeq,
@@ -113,28 +101,31 @@ int main(int argc, char* argv[])
           	}
 		for (i = 0; i < bpList.length(); i++) 
 	  	{
-			temp << bpList[i].deviceID;
-			if(strcmp(temp.str().c_str() , deviceid.c_str() ) == 0 )
+			if(infoSeq[i].valid_data)
 			{
 				try 
 				{
-					run(bpList[i].timeOfMeasurement,bpList[i].systolicPressure,bpList[i].diastolicPressure,bpList[i].pulseRatePerMinute);
-					std::cout << bpList[i].timeOfMeasurement<<"\n";
-					std::cout << "connected ok" << endl;
+					temp<<bpList[i].deviceID;
+			run(bpList[i].timeOfMeasurement,bpList[i].systolicPressure,bpList[i].diastolicPressure,bpList[i].pulseRatePerMinute,temp.str().c_str());
+			prtemp <<bpList[i].deviceID <<", "<<bpList[i].timeOfMeasurement<<", "<< bpList[i].systolicPressure;
+			prtemp <<", "<<bpList[i].diastolicPressure<<", "<<bpList[i].pulseRatePerMinute;
+			bloodPersist.info(prtemp.str().c_str());
+			prtemp.str("");
 				} 
 				catch( DBException &e ) 
 				{
-				std::cout << "caught " << e.what() << endl;
+				temp <<e.what();
+				bloodInfo.notice(temp.str());
 				}
-				status = bpReader->return_loan(bpList, infoSeq);
-        		checkStatus(status, "return_loan");
+				
+				temp.str("");
 			}
-			temp.str("");
 		}
-		
-		sleep(1);
+		status = bpReader->return_loan(bpList, infoSeq);
+       		checkStatus(status, "return_loan");
 	}
-	simpledds->deleteReader(reader);
+	bloodInfo.notice("Blood Pressure Persist Subscriber Ends "+deviceid);	
+	simpledds->deleteReader(content_reader);
         delete simpledds;
         return 0;
 }
