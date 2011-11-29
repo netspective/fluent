@@ -25,13 +25,13 @@ int socketDescriptor;
 unsigned short int serverPort;
 struct sockaddr_in serverAddress;
 struct hostent *hostInfo;
-char buf[1024], c;
-int spawn,flag,sizebuf;
+char buf[BUFFERSIZE], c;
+int spawn,flag,sizebuf,port;
 string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
 stringstream prtemp;
 int main(int argc, char* argv[]) 
 {
-	if (!parse_args_pub(argc, argv,hostip,domainid,deviceid,loginfo,logdata,logconfpath))
+	if (!parse_args_pub(argc, argv,hostip, port,domainid,deviceid,loginfo,logdata,logconfpath))
     	return 1;
 	
 	/*Importing log4cpp configuration and Creating category*/
@@ -49,11 +49,8 @@ int main(int argc, char* argv[])
 
 	/*Setting QoS Properties for Topic*/
 	DDS::TopicQos tQos;
-	tQos.durability.kind=VOLATILE_DURABILITY_QOS;
-	tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-	tQos.history.depth=10;
-	tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
-	tQos.durability_service.history_depth= 1024;
+	getQos(tQos);
+	
 	simpledds = new SimpleDDS(tQos);
 	typesupport = new BloodPressureTypeSupport();
 	writer = simpledds->publish(typesupport);
@@ -67,7 +64,7 @@ int main(int argc, char* argv[])
 		bloodInfo.notice(" BloodPressure Publisher Ends");	
 		exit(1);
 	}
-	serverPort=5000;
+	serverPort=port;
 	cin.get(c); 
 	socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 	if (socketDescriptor < 0) 
@@ -104,8 +101,8 @@ int main(int argc, char* argv[])
 	/*Storing Domain and Device ID*/
 	data.deviceID = DDS::string_dup(deviceid.c_str());
 	data.deviceDomain = DDS::string_dup(domainid.c_str());
-	bloodInfo.notice("Blood Pressure Started Publishing data in DDS");
-	bloodInfo.notice("Format: TIMEOFMEASURED, SYSTOLIC, DIATOLIC, PULSERATE");	
+	bloodInfo.notice("Blood Pressure Started Publishing Data In DDS");
+	bloodInfo.notice("Format: DOMAIN, DEVICEID, TIMEOFMEASURED, SYSTOLIC, DIASTOLIC, PULSERATE");	
 	while (1) 
 	{
 		
@@ -113,21 +110,22 @@ int main(int argc, char* argv[])
 		{
 			buf[sizebuf]='\0';
 			char * pch;
-			pch = strtok (buf,":");
+			prtemp<<domainid<<COMMA<<deviceid<<COMMA;
+			pch = strtok (buf,SEMI);
 			data.timeOfMeasurement = atol(pch);
-			prtemp<<data.timeOfMeasurement<<", ";
-			pch = strtok (NULL, ":");
+			prtemp<<data.timeOfMeasurement<<COMMA;
+			pch = strtok (NULL, SEMI);
 			data.systolicPressure = (short)atoi(pch);		
-			prtemp<<data.systolicPressure<<", ";
-			pch = strtok (NULL, ":");
+			prtemp<<data.systolicPressure<<COMMA;
+			pch = strtok (NULL, SEMI);
 			data.diastolicPressure = (short)atoi(pch);
-			prtemp<<data.diastolicPressure<<", ";
-			pch = strtok (NULL, ":");
+			prtemp<<data.diastolicPressure<<COMMA;
+			pch = strtok (NULL, SEMI);
 			data.pulseRatePerMinute = (short)atoi (pch);
 			prtemp<<data.pulseRatePerMinute;
 			bloodData.info(prtemp.str().c_str());
 			bpWriter->write(data, NULL);
-			prtemp.str("");
+			prtemp.str(CLEAN);
 		}
 
 	}

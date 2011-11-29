@@ -25,16 +25,17 @@ namespace po = boost::program_options;
 using namespace com::netspective::medigy;
 stringstream temp,prtemp;
 string domainid,deviceid,loginfo,logdata,logconfpath;
-int splow,sphigh;
+int splow,sphigh,pulselow,pulsehigh;
 
 
 
 int main(int argc, char* argv[]) 
 {
-	splow=88;
-	sphigh=92;
-
-	if (!parse_args_pulse_alarm(argc,argv,domainid,deviceid,loginfo,logdata,logconfpath,splow,sphigh))
+	splow = 88;
+	sphigh = 92;
+	pulselow = 90;
+	pulsehigh = 105;
+ 	if (!parse_args_pulse_alarm(argc,argv,domainid,deviceid,loginfo,logdata,logconfpath,splow,sphigh,pulselow,pulsehigh))
     	return 1;
 	
 	/*Importing log4cpp configuration and Creating category*/
@@ -53,12 +54,9 @@ int main(int argc, char* argv[])
 	int i=0;
 
 	/*Setting QoS Properties for Topic*/
-        DDS::TopicQos tQos;
-        tQos.durability.kind=VOLATILE_DURABILITY_QOS;
-        tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-        tQos.history.depth=10;
-        tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
-        tQos.durability_service.history_depth= 1024;
+	DDS::TopicQos tQos;
+	getQos(tQos);
+
         simpledds = new SimpleDDS(tQos);
 	typesupport = new PulseOximeterTypeSupport();
 
@@ -70,7 +68,7 @@ int main(int argc, char* argv[])
    	PulseOximeterSeq  bpList;
      	SampleInfoSeq     infoSeq;
 	pulseInfo.notice("pulse Oximeter Alarm Subscriber for "+deviceid);
-	pulseInfo.notice("Format: DEVICE_ID, MEASURED_TIME, SPO2, PUSLERATE");
+	pulseInfo.notice("Format: DOMAIN_ID, DEVICE_ID, MEASURED_TIME, SPO2 (LEVEL), PUSLERATE (LEVEL)");
 	
 	/*Receiving Data from DDS */	
 	while (1) 
@@ -92,12 +90,12 @@ int main(int argc, char* argv[])
 
 			if(infoSeq[i].valid_data)
 			{
-				if (bpList[i].SPO2 <  splow || bpList[i].SPO2 > sphigh)
+		if (bpList[i].SPO2 <  splow || bpList[i].SPO2 > sphigh || bpList[i].pulseRatePerMinute < pulselow || bpList[i].pulseRatePerMinute > pulsehigh)
 				{
-					prtemp <<bpList[i].deviceID<<", "<<bpList[i].timeOfMeasurement<<", ";
-			 		prtemp <<bpList[i].SPO2<<", "<< bpList[i].pulseRatePerMinute;
+					prtemp <<bpList[i].deviceDomain<<COMMA<<bpList[i].deviceID<<COMMA<<bpList[i].timeOfMeasurement<<COMMA;
+			 		prtemp <<alarmString(bpList[i].SPO2,splow,sphigh)<<COMMA<<alarmString(bpList[i].pulseRatePerMinute,pulselow,pulsehigh);
 			 		pulseAlarm.info(prtemp.str().c_str());
-					prtemp.str("");
+					prtemp.str(CLEAN);
 				}
 				
 			}

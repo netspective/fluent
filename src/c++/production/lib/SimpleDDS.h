@@ -54,6 +54,8 @@ class TopicData {
 };
 
 
+    /*QoS property*/
+void getQos(TopicQos &tqos);
 
 /** Simple DDS is used to create publishers and subscribers quickly,
  *  using default settings.  The typical usage will be:
@@ -76,6 +78,7 @@ class SimpleDDS {
     vector<TopicData*> *topics;
     TopicQos reliable_topic_qos;
     TopicQos transient_topic_qos;
+    ContentFilteredTopic_var filteredTopic;
 
     void InitQos();
     char* TypeNameToTopic(const char *typeName);
@@ -87,11 +90,17 @@ class SimpleDDS {
     /* Delete the DDS domain */
     ~SimpleDDS();
 
+
+
+
     /* Create a 'publisher' for a Type (like BloodPressureType) */
     DataWriter_ptr publish(TypeSupport *support);
 
     /* Create a 'subscriber' for a Type (like BloodPressureType) */
     DataReader_ptr subscribe(TypeSupport *support);
+
+    /* Create a 'subscriber' for a Type (like BloodPressureType) with Content Filter*/
+    DataReader_ptr filteredSubscribe(TypeSupport *support, string fTopic, string fieldName, string filterContent,const StringSeq &expr);
 
     /* Delete the writer used for publishing */
     void deleteWriter(DataWriter_ptr writer);

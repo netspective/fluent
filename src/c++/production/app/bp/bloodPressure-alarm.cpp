@@ -55,12 +55,9 @@ int main(int argc, char* argv[])
 	 int i=0;
          
 	 /*Setting QoS Properties for Topic*/
-         DDS::TopicQos tQos;
-         tQos.durability.kind=VOLATILE_DURABILITY_QOS;
-         tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-         tQos.history.depth=10;
-         tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
-         tQos.durability_service.history_depth= 1024;
+	 DDS::TopicQos tQos;
+	 getQos(tQos);
+
          simpledds = new SimpleDDS(tQos);
 	 typesupport = new BloodPressureTypeSupport();
 
@@ -74,7 +71,7 @@ int main(int argc, char* argv[])
      	 SampleInfoSeq     infoSeq;
 
 	 bloodInfo.notice("Blood Pressure alarm Subscriber for "+deviceid);
-	 bloodInfo.notice("Format: DEVICE_ID, MEASURED_TIME, SYSTOLIC, DIATOLIC, PULSERATE");
+	 bloodInfo.notice("Format: DOMAIN_ID, DEVICE_ID, MEASURED_TIME, SYSTOLIC(LEVEL), DIASTOLIC(LEVEL), PULSERATE(LEVEL)");
 	 while (1) 
 	 {
          	status = bpReader->take(
@@ -96,10 +93,12 @@ int main(int argc, char* argv[])
 			{
 			if (bpList[i].systolicPressure < sysmin || bpList[i].systolicPressure > sysmax || bpList[i].diastolicPressure < dismin || bpList[i].diastolicPressure > dismax || bpList[i].pulseRatePerMinute < pulsemin || bpList[i].pulseRatePerMinute > pulsemax)
 			{
-				prtemp <<bpList[i].deviceID <<", "<<bpList[i].timeOfMeasurement<<", "<< bpList[i].systolicPressure;
-				prtemp <<", "<<bpList[i].diastolicPressure<<", "<<bpList[i].pulseRatePerMinute;
+				prtemp <<bpList[i].deviceDomain<<COMMA<<bpList[i].deviceID<<COMMA;
+				prtemp <<bpList[i].timeOfMeasurement<<COMMA<<alarmString(bpList[i].systolicPressure,sysmin,sysmax);
+				prtemp <<COMMA<<alarmString(bpList[i].diastolicPressure,dismin,dismax)<<COMMA;
+				prtemp <<alarmString(bpList[i].pulseRatePerMinute,pulsemin,pulsemax);
 				bloodAlarm.info(prtemp.str().c_str());
-				prtemp.str("");
+				prtemp.str(CLEAN);
 			}
 			
 			}

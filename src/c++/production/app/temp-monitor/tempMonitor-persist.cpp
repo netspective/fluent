@@ -24,22 +24,23 @@ using namespace std;
 namespace po = boost::program_options;
 using namespace com::netspective::medigy;
 std::stringstream temp,prtemp;
-string domainid,deviceid,loginfo,logdata,logconfpath;
+string domainid,deviceid,loginfo,logdata,logconfpath,host,database,tablename;
 
 void run(long time,short utemp,const char *deviceid) 
 {
 	DBClientConnection c;
-	c.connect("localhost");
-	BSONObj p = BSONObjBuilder().append("TIMESTAMP",(int)time).append("TEMPERATURE",utemp).append("DEVICEID",deviceid).obj();
-	c.insert("EMR.TEMPERATURE", p);
+	c.connect(host);
+	BSONObj p = BSONObjBuilder().append(TIMESTAMP,(int)time).append(TEMPERATURE,utemp).append(DEVICEID,deviceid).obj();
+	c.insert(tablename, p);
 }
 
  
 
 int main(int argc, char* argv[]) 
 {
-	 if (!parse_args_sub(argc, argv,domainid,deviceid,loginfo,logdata,logconfpath))
+	 if (!parse_args_sub_persist(argc, argv,domainid,deviceid,loginfo,logdata,logconfpath,host,database))
     	 return 1;
+	 tablename = database+CLEAN+domainid;
 	
 	 /*Importing log4cpp configuration and Creating category*/
          log4cpp::Category &log_root = log4cpp::Category::getRoot();
@@ -57,12 +58,9 @@ int main(int argc, char* argv[])
 	 int i=0;
 
 	 /*Setting QoS Properties for Topic*/
-         DDS::TopicQos tQos;
-         tQos.durability.kind=VOLATILE_DURABILITY_QOS;
-         tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-         tQos.history.depth=10;
-         tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
-         tQos.durability_service.history_depth= 1024;
+	 DDS::TopicQos tQos;
+	 getQos(tQos);
+
          simpledds = new SimpleDDS(tQos);
 	 typesupport = new TempMonitorTypeSupport();
 
@@ -99,18 +97,18 @@ int main(int argc, char* argv[])
 				try 
 				{
 					temp<<bpList[i].deviceID;
-					prtemp <<bpList[i].deviceID<<", "<<bpList[i].timeOfMeasurement<<", "<<bpList[i].temp;
+					prtemp <<bpList[i].deviceID<<COMMA<<bpList[i].timeOfMeasurement<<COMMA<<bpList[i].temp;
 				 	tempPersist.info(prtemp.str().c_str());
-					prtemp.str("");
+					prtemp.str(CLEAN);
 					run(bpList[i].timeOfMeasurement,bpList[i].temp,temp.str().c_str());
-					temp.str("");
+					temp.str(CLEAN);
 			
 				} 
 				catch( DBException &e ) 
 				{
 					temp <<e.what();
 					tempInfo.notice(temp.str());
-					temp.str("");
+					temp.str(CLEAN);
 				}
 				
 			}

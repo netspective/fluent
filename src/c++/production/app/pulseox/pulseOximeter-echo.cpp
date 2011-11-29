@@ -45,12 +45,8 @@ int main(int argc, char* argv[])
 	int i=0;
 
 	/*Setting QoS Properties for Topic*/
-        DDS::TopicQos tQos;
-        tQos.durability.kind=VOLATILE_DURABILITY_QOS;
-        tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-        tQos.history.depth=10;
-        tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
-        tQos.durability_service.history_depth= 1024;
+	DDS::TopicQos tQos;
+	getQos(tQos);
 
 	/*Initializing Subsciber and DataWriter*/
         simpledds = new SimpleDDS(tQos);
@@ -66,7 +62,7 @@ int main(int argc, char* argv[])
      	SampleInfoSeq     infoSeq;
 	
 	pulseInfo.notice("pulse Oximeter Subscriber for "+deviceid);
-	pulseInfo.notice("Format: DEVICE_ID, MEASURED_TIME, SPO2, PUSLERATE");
+	pulseInfo.notice("Format: DOMAIN, DEVICE_ID, MEASURED_TIME, SPO2, PUSLERATE");
 	/*Receiving Data from DDS */	
 	while (1) 
 	{
@@ -88,10 +84,10 @@ int main(int argc, char* argv[])
 			if(infoSeq[i].valid_data)
 			{
 			
-			 prtemp <<bpList[i].deviceID<<", "<<bpList[i].timeOfMeasurement<<", ";
-			 prtemp <<bpList[i].SPO2<<", "<< bpList[i].pulseRatePerMinute;
+			 prtemp <<bpList[i].deviceDomain<<COMMA<<bpList[i].deviceID<<COMMA<<bpList[i].timeOfMeasurement<<COMMA;
+			 prtemp <<bpList[i].SPO2<<COMMA<< bpList[i].pulseRatePerMinute;
 			 pulseEcho.info(prtemp.str().c_str());
-			 prtemp.str("");	
+			 prtemp.str(CLEAN);	
 			 
 				
 			}

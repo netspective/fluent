@@ -51,11 +51,8 @@ int main(int argc, char* argv[])
 	 int i=0;
 	
 	 /*Setting QoS Properties for Topic*/
-         DDS::TopicQos tQos;
-         tQos.durability.kind=VOLATILE_DURABILITY_QOS;
-         tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-         tQos.history.depth=10;
-         tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
+	 DDS::TopicQos tQos;
+	 getQos(tQos);
          tQos.durability_service.history_depth= 1024;
 
 	 /*Initializing Subscriber and DataWriter*/
@@ -71,8 +68,8 @@ int main(int argc, char* argv[])
    	 BloodPressureSeq  bpList;
      	 SampleInfoSeq     infoSeq;
 	 
-	 bloodInfo.notice("Blood Pressure Subscriber for "+deviceid);
-	 bloodInfo.notice("Format: DEVICE_ID, MEASURED_TIME, SYSTOLIC, DIATOLIC, PULSERATE");
+	 bloodInfo.notice("Blood Pressure Subscriber For "+deviceid);
+	 bloodInfo.notice("Format: DOMAIN_ID, DEVICE_ID, MEASURED_TIME, SYSTOLIC, DIASTOLIC, PULSERATE");
 	 /*Receiving Data from DDS */
 	 while (1) 
 	 {
@@ -92,10 +89,11 @@ int main(int argc, char* argv[])
 	  	{
 			if(infoSeq[i].valid_data)
 			{
-		        prtemp <<bpList[i].deviceID <<", "<<bpList[i].timeOfMeasurement<<", "<< bpList[i].systolicPressure;
-			prtemp <<", "<<bpList[i].diastolicPressure<<", "<<bpList[i].pulseRatePerMinute;
+			prtemp <<bpList[i].deviceDomain<<COMMA;
+		        prtemp <<bpList[i].deviceID <<COMMA<<bpList[i].timeOfMeasurement<<COMMA<< bpList[i].systolicPressure;
+			prtemp <<COMMA<<bpList[i].diastolicPressure<<COMMA<<bpList[i].pulseRatePerMinute;
 			bloodEcho.info(prtemp.str().c_str());
-			prtemp.str("");
+			prtemp.str(CLEAN);
 			}
 	  	}
 		status = bpReader->return_loan(bpList, infoSeq);

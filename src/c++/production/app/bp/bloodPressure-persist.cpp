@@ -30,30 +30,31 @@ namespace po = boost::program_options;
 using namespace com::netspective::medigy;
 
 std::stringstream temp,prtemp;
-string domainid,deviceid,loginfo,logdata,logconfpath;
+string domainid,deviceid,loginfo,logdata,logconfpath,host,database,tablename;
 
 void run(long time,short bp,short lbp,short pr,const char *deviceid) 
 {
 	DBClientConnection c;
-	c.connect("localhost");
-	BSONObj p = BSONObjBuilder().append("TIMESTAMP",(int)time).append("SYSTOLIC",bp).append("DIASTOLIC",lbp).append("PULSERATE",pr).append("DEVICEID",deviceid).obj();
-	c.insert("EMR.BLOOD", p);
+	c.connect(host);
+	BSONObj p = BSONObjBuilder().append(TIMESTAMP,(int)time).append(SYSTOLIC,bp).append(DIASTOLIC,lbp).append(PULSERATE,pr).append(DEVICEID,deviceid).obj();
+	c.insert(tablename, p);
 
 }
 
 
 int main(int argc, char* argv[]) 
 {
-	 if (!parse_args_sub(argc, argv,domainid,deviceid,loginfo,logdata,logconfpath))
-    	 return 1;	
+	 if (!parse_args_sub_persist(argc, argv,domainid,deviceid,loginfo,logdata,logconfpath,host,database))
+    	 return 1;
 
+	 tablename = database+DOT+domainid;
+	
 	 /*Importing log4cpp configuration and Creating category*/
 	 log4cpp::Category &log_root = log4cpp::Category::getRoot();
          log4cpp::Category &bloodInfo = log4cpp::Category::getInstance( std::string(loginfo));
          log4cpp::Category &bloodPersist = log4cpp::Category::getInstance( std::string(logdata));
          log4cpp::PropertyConfigurator::configure(logconfpath);
          bloodInfo.notice(" Blood Pressure Persist Subscriber Started " +deviceid);
-
 
 	 SimpleDDS *simpledds;
 	 BloodPressureTypeSupport_var typesupport;
@@ -63,12 +64,9 @@ int main(int argc, char* argv[])
 	 int i=0;
 
 	 /*Setting QoS Properties for Topic*/
-         DDS::TopicQos tQos;
-         tQos.durability.kind=VOLATILE_DURABILITY_QOS;
-         tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-         tQos.history.depth=10;
-         tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
-         tQos.durability_service.history_depth= 1024;
+	 DDS::TopicQos tQos;
+	 getQos(tQos);
+
          simpledds = new SimpleDDS(tQos);
 	 typesupport = new BloodPressureTypeSupport();
 	
@@ -81,9 +79,8 @@ int main(int argc, char* argv[])
    	 BloodPressureSeq  bpList;
      	 SampleInfoSeq     infoSeq;
 
-	 bloodInfo.notice("Blood Pressure Persist Subscriber for "+deviceid);
-	 bloodInfo.notice("MONGODB Format: DEVICE_ID, MEASURED_TIME, SYSTOLIC, DIATOLIC, PULSERATE");
-
+	 bloodInfo.notice("Blood Pressure Persist Subscriber for "+deviceid+" in table "+ tablename);
+	 bloodInfo.notice("MONGODB Format: DEVICE_ID, MEASURED_TIME, SYSTOLIC, DIASTOLIC, PULSERATE");
 	 while (1) 
 	{
 
@@ -105,12 +102,12 @@ int main(int argc, char* argv[])
 			{
 				try 
 				{
-					temp<<bpList[i].deviceID;
+			temp<<bpList[i].deviceID;
 			run(bpList[i].timeOfMeasurement,bpList[i].systolicPressure,bpList[i].diastolicPressure,bpList[i].pulseRatePerMinute,temp.str().c_str());
-			prtemp <<bpList[i].deviceID <<", "<<bpList[i].timeOfMeasurement<<", "<< bpList[i].systolicPressure;
-			prtemp <<", "<<bpList[i].diastolicPressure<<", "<<bpList[i].pulseRatePerMinute;
+			prtemp <<bpList[i].deviceID <<COMMA<<bpList[i].timeOfMeasurement<<COMMA<< bpList[i].systolicPressure;
+			prtemp <<COMMA<<bpList[i].diastolicPressure<<COMMA<<bpList[i].pulseRatePerMinute;
 			bloodPersist.info(prtemp.str().c_str());
-			prtemp.str("");
+			prtemp.str(CLEAN);
 				} 
 				catch( DBException &e ) 
 				{
@@ -118,7 +115,7 @@ int main(int argc, char* argv[])
 				bloodInfo.notice(temp.str());
 				}
 				
-				temp.str("");
+				temp.str(CLEAN);
 			}
 		}
 		status = bpReader->return_loan(bpList, infoSeq);

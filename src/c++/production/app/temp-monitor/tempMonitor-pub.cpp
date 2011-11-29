@@ -28,14 +28,14 @@ unsigned short int serverPort;
 struct sockaddr_in serverAddress;
 struct hostent *hostInfo;
 char buf[1024], c;
-int sizebuf;
+int sizebuf,port;
 string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
 stringstream prtemp;
 
 int main(int argc, char* argv[]) 
 {
 
-	if (!parse_args_pub(argc, argv,hostip,domainid,deviceid,loginfo,logdata,logconfpath))
+	if (!parse_args_pub(argc, argv,hostip,port,domainid,deviceid,loginfo,logdata,logconfpath))
     	return 1;
 
 	/*Importing log4cpp configuration and Creating category*/
@@ -54,11 +54,8 @@ int main(int argc, char* argv[])
 
         /*Setting QoS Properties for Topic*/
 	DDS::TopicQos tQos;
-	tQos.durability.kind=VOLATILE_DURABILITY_QOS;
-	tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-	tQos.history.depth=10;
-	tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
-	tQos.durability_service.history_depth= 1024;
+	getQos(tQos);
+
 	simpledds = new SimpleDDS(tQos);
 	typesupport = new TempMonitorTypeSupport();
 	writer = simpledds->publish(typesupport);
@@ -72,7 +69,7 @@ int main(int argc, char* argv[])
 		tempInfo.notice(": Temperature Monitor Publisher Ends ");	
 		exit(1);
 	}
-	serverPort=5000;
+	serverPort=port;
 	cin.get(c); 
 	socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 	if (socketDescriptor < 0) 
@@ -119,13 +116,13 @@ int main(int argc, char* argv[])
 			char * pch;
 			pch = strtok (buf,":");
 			data.timeOfMeasurement = atol(pch);
-			prtemp<<data.timeOfMeasurement<<", ";
+			prtemp<<data.timeOfMeasurement<<COMMA;
 			pch = strtok (NULL, ":");
 			data.temp = (short)atoi(pch);
 			prtemp<<data.temp;
 			tempData.info(prtemp.str().c_str());
 			bpWriter->write(data, NULL);
-			prtemp.str("");
+			prtemp.str(CLEAN);
 		}
 	}
 

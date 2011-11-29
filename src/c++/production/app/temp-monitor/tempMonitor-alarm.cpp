@@ -53,12 +53,9 @@ int main(int argc, char* argv[])
 	 int i=0;
 
 	 /*Setting QoS Properties for Topic*/
-         DDS::TopicQos tQos;
-         tQos.durability.kind=VOLATILE_DURABILITY_QOS;
-         tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-         tQos.history.depth=10;
-         tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
-         tQos.durability_service.history_depth= 1024;
+	 DDS::TopicQos tQos;
+	 getQos(tQos);
+
          simpledds = new SimpleDDS(tQos);
 	 typesupport = new TempMonitorTypeSupport();
 
@@ -70,7 +67,7 @@ int main(int argc, char* argv[])
    	 TempMonitorSeq  bpList;
      	 SampleInfoSeq     infoSeq;
 	 tempInfo.notice("Temerature Monitor Alarm Subscriber for "+deviceid);
-	 tempInfo.notice("Format: DEVICE_ID, START_TIME, END_TIME,TEMPERATURE");
+	 tempInfo.notice("Format: DOMAIN, DEVICE_ID, START_TIME, END_TIME, AVERAGE_TEMPERATURE");
 
 	 /*Receiving Data from DDS */
 	 while (1) 
@@ -106,9 +103,10 @@ int main(int argc, char* argv[])
 						avg=avg/nrecord;
 						if(avg < templow || avg > temphigh)
 						{
-							prtemp <<bpList[i].deviceID<<", "<<timestart<<", "<<timeend<<", "<<avg;
+							prtemp <<bpList[i].deviceDomain<<COMMA;
+							prtemp <<bpList[i].deviceID<<COMMA<<timestart<<COMMA<<timeend<<COMMA<<avg;
 			 				tempAlarm.info(prtemp.str().c_str());
-							prtemp.str("");
+							prtemp.str(CLEAN);
 							
 						}
 						nrecord = -1;

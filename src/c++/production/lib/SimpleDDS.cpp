@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <iostream>
 #include <string>
 #include "SimpleDDS.h"
-
+#include <sstream>
 using namespace DDS;
 using namespace std;
 
@@ -58,6 +59,15 @@ SimpleDDS::SimpleDDS(TopicQos reliable_topicqos) {
     status = participant->get_default_topic_qos(reliable_topicqos);
 	memcpy(&reliable_topic_qos,&reliable_topicqos, sizeof(reliable_topicqos));
 
+}
+
+void getQos(TopicQos &tQos)
+{
+	tQos.durability.kind=VOLATILE_DURABILITY_QOS;
+        tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
+        tQos.history.depth=10;
+        tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
+        tQos.durability_service.history_depth= 1024;
 }
 
 /* Create the reliable_qos and transient_qos */
@@ -187,6 +197,42 @@ DataReader_ptr SimpleDDS::subscribe(TypeSupport *typesupport) {
         DATAREADER_QOS_USE_TOPIC_QOS,  
         (DataReaderListener*) NULL, 
         STATUS_MASK_NONE);
+
+    checkHandle(topic->reader, "create_datareader");
+    return topic->reader;
+}
+DataReader_ptr SimpleDDS::filteredSubscribe(TypeSupport *typesupport, string fTopic, string fieldName, string filterContent,const StringSeq &expr)
+{
+    ReturnCode_t status;
+    checkHandle(typesupport, "publish");
+    TopicData *topic = new TopicData();
+    topics->push_back(topic);
+    topic->typeName = typesupport->get_type_name();
+    status = typesupport->register_type(participant.in(), topic->typeName);
+    checkStatus(status, "register_type");
+    topic->topicName = TypeNameToTopic(topic->typeName);
+
+    topic->topic = participant->create_topic(
+        topic->topicName,
+        topic->typeName,
+        reliable_topic_qos,
+        NULL,                  // No TopicListener is needed
+        STATUS_MASK_NONE);
+
+    checkHandle(topic->topic.in(), "create_topic");
+
+    status = participant->get_default_subscriber_qos(topic->subQos);
+    checkStatus(status, "get_default_subscriber_qos");
+
+
+    topic->subscriber = participant->create_subscriber(topic->subQos, NULL, STATUS_MASK_NONE);
+    checkHandle(topic->subscriber.in(), "create_subscriber");
+
+    ostringstream buf;
+    buf << fieldName <<" = '" << filterContent << "'";
+    CORBA::String_var sFilter = CORBA::string_dup(buf.str().c_str());
+    filteredTopic = participant->create_contentfilteredtopic(fTopic.c_str(),topic->topic, sFilter.in(), expr);
+    topic->reader = topic->subscriber->create_datareader(filteredTopic.in(),DATAREADER_QOS_USE_TOPIC_QOS, NULL, STATUS_MASK_NONE);
 
     checkHandle(topic->reader, "create_datareader");
     return topic->reader;
