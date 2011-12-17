@@ -275,7 +275,31 @@ Example
 
 NOTE :` The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.`
 
+**3.5 Websocket**
+  
+  * Start the `Bloodpressure Webserver` in the terminal by passing various options suffix to the command
 
+        $./bp-sub-web 
+
+Available Options are:
+        
+        --web server name      Webserver Name
+        
+        --port_no              Port Number
+        
+  Example
+      
+        $./bp-sub-web netspective-webserver.com 9003
+        
+  * Once the blood pressure subscriber started as webserver the data will be recieved on the web browser.
+  
+    The web browser can be access data through the following URL 
+      
+      `http://netspective-webserver.com/medigraph/index.php?domain_id=DOMAINID&device_id=DEVICEID` 
+
+NOTE: `Domain name and device id are missed in the URL then the entire device data will be displayed.`
+
+              
 **PULSE OXIMETER:**
 
 **4.1.** `Pulse oximeter publisher` shall be started by passing the various options suffix to the command .
@@ -421,6 +445,29 @@ Example:
 
 NOTE : `The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.`
 
+**4.5 Websocket**
+  
+  * Start the `Pulseox Webserver` in the terminal by passing various options suffix to the command
+
+        $./pulseox-sub-web 
+
+Available Options are:
+        
+        --web server name      Webserver Name
+        
+        --port_no              Port Number
+        
+  Example
+      
+        $./pulseox-sub-web netspective-webserver.com 9003
+        
+  * Once the pulseox subscriber started as webserver the data will be recieved on the web browser.
+  
+    The web browser can be access data through the following URL 
+      
+      `http://netspective-webserver.com/medigraph/index.php?domain_id=DOMAINID&device_id=DEVICEID` 
+
+NOTE: `Domain name and device id are missed in the URL then the entire device data will be displayed.`
 
 **TEMPERATURE MONITOR:**
 
@@ -472,7 +519,7 @@ Available options are:
 
 EXAMPLE:
        
-        $./tempmonitor-pub.sh --domain=blood --device-id=BP --spawn=5 --log4cpp-conf ../src/c++/production/conf/simulation_log_bp.conf
+        $./temperature-pub.sh --domain=blood --device-id=BP --spawn=5 --log4cpp-conf ../src/c++/production/conf/simulation_log_bp.conf
   
   
  NOTE : `The arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format`
@@ -480,7 +527,7 @@ EXAMPLE:
  
 **5.2.** Start the `temperature monitor subscribers` on the other terminal by passing the various options suffix to the command ,
 
-          $./tempmonitor-sub-echo
+          $./tempmerature-sub-echo
 
 Available options are:
 
@@ -498,7 +545,7 @@ Available options are:
 
 Example:
 
-        $ ./temp-sub-echo --domain temp --device-id Temp_LAB123 --log-info temp.info --log-data temp.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_temp_sub.conf  
+        $ ./temperature-sub-echo --domain temp --device-id Temp_LAB123 --log-info temp.info --log-data temp.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_temp_sub.conf  
 
   * Once the temp subscriber is started it will retrieve data from the Topic. Subscriber uses ContentFilterTopic to retrieve messages based on the Device ID from a single topic.
 
@@ -506,7 +553,7 @@ NOTE :  `The category name arguments passed to the application needs to be confi
 
 **5.3.**  Start the `temperature-monitor alarm` by passing the various options suffix to the command ,
 
-        $./tempmonitor-sub-alarm
+        $./tempmerature-sub-alarm
 
 Available options are:
 
@@ -530,7 +577,7 @@ Available options are:
 
 Example:
 
-        $ ./tempmonitor-sub-alarm --domain pulse --device-id TEMP_LAB3 --log-info temp.info --log-data temp.alarm --log4cpp-conf ../src/c++/production/conf/simulation_log_temp_sub.conf
+        $ ./temperature-sub-alarm --domain pulse --device-id TEMP_LAB3 --log-info temp.info --log-data temp.alarm --log4cpp-conf ../src/c++/production/conf/simulation_log_temp_sub.conf
 
   * Once the pulse oximeter alarm is started it will retrieve the data and the displays in log file based on the default assessment or from the specified 
 
@@ -540,7 +587,7 @@ NOTE : `The category name arguments passed to the application needs to be config
 
 **5.4.** Start the `temperature-monitor persistence` by passing the various options suffix to the command,
 
-         $./tempmonitor-sub-persist 
+         $./temperature-sub-persist 
 
 Available options are:
 
@@ -562,7 +609,7 @@ Available options are:
 
 Example:
 
-        $./tempmonitor-sub-persist --domain pulse --device-id TEMP_LAB3 --log-info temp.info --log-data temp.persist --log4cpp-conf ../src/c++/production/conf/
+        $./temperature-sub-persist --domain pulse --device-id TEMP_LAB3 --log-info temp.info --log-data temp.persist --log4cpp-conf ../src/c++/production/conf/
 
         simulation_log_temp_sub.conf
 
@@ -570,6 +617,29 @@ Example:
 
 NOTE : `The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.`
 
+**5.5 Websocket**
+  
+  * Start the `Teperature Monitor Webserver` in the terminal by passing various options suffix to the command
+
+        $./temperature-sub-web 
+
+Available Options are:
+    
+        --web server name      Webserver Name
+        
+        --port_no              Port Number
+        
+  Example
+      
+        $./temperature-sub-web netspective-webserver.com 9003
+        
+  * Once the temperature subscriber started as webserver the data will be recieved on the web browser.
+  
+  The web browser can be access data through the following URL 
+      
+      `http://netspective-webserver.com/medigraph/index.php?domain_id=DOMAINID&device_id=DEVICEID` 
+
+NOTE: `Domain name and device id are missed in the URL then the entire device data will be diaplyed.`
 
 STEPS TO RUN THE DISTRIBUTED APPLICATION:
 ========================================
