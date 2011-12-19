@@ -275,11 +275,11 @@ Example
 
 NOTE :` The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.`
 
-**3.5 Websocket**
+**Common Webserver:**
   
-  * Start the `Bloodpressure Webserver` in the terminal by passing various options suffix to the command
+  * Start the `Common Webserver`in the terminal by passing few options suffix to the command ,it can be used as common for all the subsrcibers-webserver
 
-        $./bp-sub-web 
+        $./web-listener
 
 Available Options are:
         
@@ -289,9 +289,9 @@ Available Options are:
         
   Example
       
-        $./bp-sub-web netspective-webserver.com 9003
+        $./web-listener netspective-webserver.com 9003
         
-  * Once the blood pressure subscriber started as webserver the data will be recieved on the web browser.
+  * Once the subscriber starts as webserver the data about  domain and device  will be recieved on the web browser.
   
     The web browser can be access data through the following URL 
       
@@ -445,30 +445,6 @@ Example:
 
 NOTE : `The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.`
 
-**4.5 Websocket**
-  
-  * Start the `Pulseox Webserver` in the terminal by passing various options suffix to the command
-
-        $./pulseox-sub-web 
-
-Available Options are:
-        
-        --web server name      Webserver Name
-        
-        --port_no              Port Number
-        
-  Example
-      
-        $./pulseox-sub-web netspective-webserver.com 9003
-        
-  * Once the pulseox subscriber started as webserver the data will be recieved on the web browser.
-  
-    The web browser can be access data through the following URL 
-      
-      `http://netspective-webserver.com/medigraph/index.php?domain_id=DOMAINID&device_id=DEVICEID` 
-
-NOTE: `Domain name and device id are missed in the URL then the entire device data will be displayed.`
-
 **TEMPERATURE MONITOR:**
 
 **5.1.** Temperature monitor publisher shall be started by passing the various options suffix to the command.
@@ -617,29 +593,6 @@ Example:
 
 NOTE : `The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.`
 
-**5.5 Websocket**
-  
-  * Start the `Teperature Monitor Webserver` in the terminal by passing various options suffix to the command
-
-        $./temperature-sub-web 
-
-Available Options are:
-    
-        --web server name      Webserver Name
-        
-        --port_no              Port Number
-        
-  Example
-      
-        $./temperature-sub-web netspective-webserver.com 9003
-        
-  * Once the temperature subscriber started as webserver the data will be recieved on the web browser.
-  
-  The web browser can be access data through the following URL 
-      
-      `http://netspective-webserver.com/medigraph/index.php?domain_id=DOMAINID&device_id=DEVICEID` 
-
-NOTE: `Domain name and device id are missed in the URL then the entire device data will be diaplyed.`
 
 STEPS TO RUN THE DISTRIBUTED APPLICATION:
 ========================================
