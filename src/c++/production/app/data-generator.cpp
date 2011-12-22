@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <sstream>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -10,9 +11,11 @@
 #include <time.h>
 #include <pthread.h>
 #include <iostream>
+#include <fstream>
 #include <unistd.h>
 #include <assert.h>
-
+#include "ecgsyn.cpp"
+using namespace std;
 void* handle_client(void *arg) 
 {
 	int client, requestlen, len;
@@ -35,6 +38,7 @@ void* handle_client(void *arg)
 		request[len]='\0';
 		printf("Request length %d %s\n",len,request);
 		requestlen=len;	
+		
 		sleep(2);
 	}
 
@@ -45,7 +49,6 @@ void* handle_client(void *arg)
 		{
 			while (1) 
 			{
-				//printf("\nSend %d",i);
 				sprintf(temp, "%d", time(0));
 				strcat(send_data,temp);
 				sys = rand()%30+110;
@@ -74,7 +77,6 @@ void* handle_client(void *arg)
 		{
 			while (1) 
 			{
-				//printf("\nSend %d",i);
 				sprintf(temp, "%d", time(0));
 				strcat(send_data,temp);
 
@@ -97,26 +99,105 @@ void* handle_client(void *arg)
 			}
 		}
 
-		else if(strcmp(request , "TEMPMONITOR") == 0 )
+		else if(strcmp(request , "TEMPERATURE") == 0 )
 		{
 			while (1) 
 			{
-				//printf("\nSend %d",i);
+				fflush(stdout);	
 				sprintf(temp, "%d", time(0));
-				strcat(send_data,temp);
+                                strcat(send_data,temp);
+                                sys = rand()%30+95;
+                                sprintf(temp, "%d", sys);
+                                strcat(send_data,":");
+                	        strcat(send_data,temp);
 
-				temp_monitor = rand()%60+50;
-				sprintf(temp, "%d", temp_monitor);
-				strcat(send_data,":");
-				strcat(send_data,temp);
-
-				send(client, send_data,strlen(send_data), MSG_NOSIGNAL);
-				sleep(1);
-				fflush(stdout);
-				i++;
-				strcpy(send_data,"");
+                                send(client, send_data,strlen(send_data), MSG_NOSIGNAL);
+                                sleep(1);
+                                fflush(stdout);
+                                i++;
+                                strcpy(send_data,"");
+                                strcpy(temp,"");
 			}
 
+		}
+		else if(strcmp(strncpy(temp,request,3), "ECG") == 0 )
+                {
+			int m_count=0;
+			std::stringstream ecgfile,rrfile,rrpcfile;
+			string dsp[12];
+			dsp[0] = strtok (request,":");
+			for(int arn=0;arn<11;arn++)
+			dsp[arn] = strtok (NULL,":");
+			while(1)
+			{
+			time_t rawtime;
+			time ( &rawtime );
+			ecgfile<<rawtime;
+			rrfile<<rawtime<<"rr";
+			rrpcfile<<rawtime<<"rrpc";
+			//dorun(ecgfile.str().c_str(),rrfile.str().c_str(),rrpcfile.str().c_str());	
+			(float)atof(dsp[0].c_str());
+			dorun(ecgfile.str().c_str(),rrfile.str().c_str(),rrpcfile.str().c_str(),(int)atoi(dsp[0].c_str()),(int)atoi(dsp[1].c_str()),(int)atoi(dsp[2].c_str()),(float)atof(dsp[3].c_str()),(float)atof(dsp[4].c_str()),(float)atof(dsp[5].c_str()),(float)atof(dsp[6].c_str()),(float)atof(dsp[7].c_str()),(float)atof(dsp[8].c_str()),(float)atof(dsp[9].c_str()),(float)atof(dsp[10].c_str()));	
+			string ecg,rr,rrpc;
+  			
+			ifstream ifs(ecgfile.str().c_str());
+			ifstream ifrr(rrfile.str().c_str());
+			ifstream ifrrpc(rrpcfile.str().c_str());
+			
+				while(!ifrr.eof())
+				{
+				if(!ifs.eof())
+				{
+				if(!ifrrpc.eof())
+				{
+					fflush(stdout);
+					stringstream ecgtemp;
+					ecgtemp<<time(0)<<":";
+					getline( ifs, ecg );
+					for(int i = 0; i < ecg.length(); i++)
+    					{
+					           if( isspace(ecg[i]) )
+					           ecg[i] = ':';
+					}	
+					ecgtemp <<ecg<<":";
+					getline( ifrr, rr );
+					ecgtemp <<rr <<":";
+					getline( ifrrpc, rrpc );
+					ecgtemp<<rrpc;
+					if((strcmp(ecg.c_str(),"")!=0)&&(strcmp(rr.c_str(),"")!=0)&&(strcmp(rrpc.c_str(),"")!=0))
+					send(client, ecgtemp.str().c_str(),1024, MSG_NOSIGNAL);
+					ecgtemp.str("");			
+					int newflag=-1;
+					while(newflag <= 0&&!ifrr.eof())
+					{
+						newflag=recv(client, temp,1024, MSG_NOSIGNAL);
+						cout<<"\nloop";
+						
+				
+					}
+					cout <<"\n"<< m_count++ <<" data Recv : "<<temp;
+				}
+				}
+				}
+
+			
+			ifs.close();
+			ifrr.close();
+			ifrrpc.close();
+			remove(ecgfile.str().c_str());
+			remove(rrfile.str().c_str());
+			remove(rrpcfile.str().c_str());
+			ecgfile.str("");
+			rrfile.str("");
+			rrpcfile.str("");
+
+			cout <<"\n#########################################################################";
+			cout <<"\n NEW LOOP ";
+			cout <<"\n#########################################################################";
+
+		}
+			
+		
 		}
 		else
 		{
@@ -171,7 +252,7 @@ int main()
 	pthread_attr_t attr;
 	pthread_t id;
 	char ip_s[20]="127.0.0.1";
-	char port_s[10]="5000";
+	char port_s[10]="5001";
 	server = create_server(ip_s,port_s);
 	while (1) 
 	{	
@@ -182,14 +263,13 @@ int main()
 		{
 			continue;
 		}
-
+		
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 		ret = pthread_create(&id, &attr, handle_client, (void*)&client);
-		//ret = pthread_create(&id, NULL, handle_client,(void*)&client);
 		assert(ret == 0);
+		sleep(1);
 	}
 	close(server);
 	return 0;
 }
-
