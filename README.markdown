@@ -593,6 +593,123 @@ Example:
 
 NOTE : `The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.`
 
+** ECG **
+
+**6.1**  Ecg publisher shall be started by passing the various options suffix to the command.
+
+    $./ecg-pub --
+
+Available options are:
+  
+        --help                Produce help message
+
+        --data-gen-ip arg     Data Generator IP 
+
+        --data-gen-port       Data Generator Port No.
+        
+        --domain arg          Device Domain 
+
+        --device-id arg       Device ID - for device identification
+
+        --log-info arg        Log information category
+
+        --log-data arg        Log data category  
+
+        --log4cpp-conf arg    Log configuration and format specification file
+
+Example :
+
+        ./ecg-pub --data-gen-ip 127.0.0.1 --data-gen-port 5000 --domain ECG --device-id ECG_LAB44 --log-info ecg.info --log-data ecg.data --log4cpp-conf ../src/c++/production/conf/simulation_log_ecg.conf 
+
+* Once the publisher binds with the data generator and send a command, it receives data from data-generator and displays the data in the log files.
+
+NOTE : `The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.`
+
+**6.2.** Start the `ecg subscribers` on the other terminal by passing the various options suffix to the command ,
+
+          $./ecg-sub-echo
+
+Available options are:
+
+        --help                  Produce help message
+
+        --domain arg            Device Domain 
+
+        --device-id arg         Device ID - for device identification
+
+        --log-info arg          Log information category
+
+        --lod-data arg        	Log data file 
+
+        --log4cpp-conf arg      Log configuration and format specification file
+
+Example:
+
+        ./ecg-sub-echo --domain ECG --device-id ECG_LAB44 --log-info ecg.info --log-data ecg.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_ecg_sub.conf
+  
+* Once the temp subscriber is started it will retrieve data from the ContentFilterTopic to retrieve messages based on the Device ID from a single topic.
+
+NOTE :  `The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.`
+
+**EbD Sensor:**
+
+**7.1** Ebd-sensor publisher shall be started by passing the various options suffix to the command.
+
+    $./Ebd-sensor-pub --
+
+Available options are:
+  
+        --help                Produce help message
+
+        --data-gen-ip arg     Data Generator IP 
+
+        --data-gen-port       Data Generator Port No.
+        
+        --domain arg          Device Domain 
+
+        --device-id arg       Device ID - for device identification
+
+        --log-info arg        Log information category
+
+        --log-data arg        Log data category  
+
+        --log4cpp-conf arg    Log configuration and format specification file
+
+Example :
+
+        ./Ebd-sensor-pub--data-gen-ip 127.0.0.1 --data-gen-port 5000 --domain sensor --device-id Sensor_LAB44 --log-info ecg.info --log-data ecg.data --log4cpp-conf ../src/c++/production/conf/simulation_log_ecg.conf 
+
+* Once the publisher binds with the data generator and send a command, it receives data from data-generator and displays the data in the log files.
+
+NOTE : `The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.`
+
+**7.2.** Start the `Ebd-sensor-subscribers` on the other terminal by passing the various options suffix to the command ,
+
+          $./Ebd-sensor-sub-echo
+
+Available options are:
+
+        --help                  Produce help message
+
+        --domain arg            Device Domain 
+
+        --device-id arg         Device ID - for device identification
+
+        --log-info arg          Log information category
+
+        --lod-data arg          Log data file 
+
+        --log4cpp-conf arg      Log configuration and format specification file
+
+Example:
+
+        ./Ebd-sensor-sub-echo --domain ECG --device-id Sensor_LAB44 --log-info sensor.info --log-data sensor.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_Ebd_sensor_sub.conf
+  
+* Once the Ebd-sensor subscriber is started it will retrieve data from the ContentFilterTopic to retrieve messages based on the Device ID from a single topic.
+
+NOTE :  `The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.`
+
+
 
 STEPS TO RUN THE DISTRIBUTED APPLICATION:
 ========================================
