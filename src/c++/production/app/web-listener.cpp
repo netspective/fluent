@@ -8,12 +8,14 @@
 #define devid "deviceID"
 #include "websocketpp.hpp"
 #include <boost/asio.hpp>
-#include "web-listener.cpp"
+#include "bloodPressure-web.hpp"
 #include <boost/algorithm/string/replace.hpp>
 #include "SimpleDDS.h"
 #include "ccpp_bp.h"
 #include "ccpp_pulseox.h"
 #include "ccpp_temperature.h"
+#include "ccpp_ecg.h"
+#include "ccpp_EbD_Sensor.h"
 #include <dds/runtime.hpp>
 #include <dds/topic.hpp>
 #include <dds/reader.hpp>
@@ -53,7 +55,7 @@ void web_server_handler::on_close(session_ptr client)
 	const std::string alias = it->second;
 	m_connections.erase(it);
 	send_to_all(serialize_state());
-	send_to_all(encode_message("server",alias+" has left the web."));
+	//send_to_all(encode_message("server",alias+" has left the web."));
 }
 void web_server_handler::on_message(session_ptr client,const std::string &msg) 
 {
@@ -240,7 +242,122 @@ void *web_server_handler::startThread(void *arg)
 		simpledds->deleteReader(reader);
        		delete simpledds;
 	}	
+	if (msg == "ecg")
+	{
+		std::stringstream prtemp;
+	 	
+		SimpleDDS *simpledds;
+	 	ECGTypeSupport_var typesupport;
+    	 	DataReader_ptr reader;
+    	 	ECGDataReader_var ecgReader;
+    	 	ReturnCode_t status;
+	 	int i=0;
+	
+	 	/*Initializing Subscriber and DataWriter*/
+         	simpledds = new SimpleDDS();
+	 	typesupport = new ECGTypeSupport();
+	
+		reader = simpledds->subscribe(typesupport);
+    	 	ecgReader = ECGDataReader::_narrow(reader);
+   	 	ECGSeq  ecgList;
+     	 	SampleInfoSeq     infoSeq;
+		long m_count=0;
+	 	while (1) 
+		{
+         		status = ecgReader->take(
+            		ecgList,
+            		infoSeq,
+            		LENGTH_UNLIMITED,
+            		ANY_SAMPLE_STATE,
+           		ANY_VIEW_STATE,
+            		ANY_INSTANCE_STATE);
+         		checkStatus(status, "take");
+          		if (status == RETCODE_NO_DATA) 
+			{
+          			continue;
+          		}
+          		for (i = 0; i < ecgList.length(); i++) 
+	  		{
+				if(infoSeq[i].valid_data)
+				{
+					prtemp <<ecgList[i].deviceDomain<<",";
+		        		prtemp <<ecgList[i].deviceID <<","<<ecgList[i].timeOfMeasurement<<","<< ecgList[i].timeInSeconds;
+					prtemp <<","<<ecgList[i].amplitudeMillivolts<<","<<ecgList[i].waveformPeak;
+					client->send(test.encode_message("server",prtemp.str().c_str()));
+					//cout << prtemp.str().c_str()<< "\n"<<m_count++<<"\n";
+					prtemp.str("");
+									
+				}
+		  	}
+			status = ecgReader->return_loan(ecgList, infoSeq);
+	       		checkStatus(status, "return_loan");
+       
+    		}
+		simpledds->deleteReader(reader);
+       		delete simpledds;
+	}
+
+	if (msg == "sensor")
+	{
+				std::stringstream prtemp;
+		 SimpleDDS *simpledds;
+		 EbD_SensorTypeSupport_var typesupport;
+    		 DataReader_ptr content_reader;
+    		 EbD_SensorDataReader_var EbD_SensorReader;
+    		 ReturnCode_t status;
+		 int i=0;
 		
+		  simpledds = new SimpleDDS();
+		 typesupport = new EbD_SensorTypeSupport();
+    	 
+		 /*Creating content Filtered Subscriber*/
+		 StringSeq sSeqExpr;
+       		 sSeqExpr.length(0);
+
+
+		content_reader = simpledds->subscribe(typesupport);
+		 EbD_SensorReader = EbD_SensorDataReader::_narrow(content_reader);	
+	   	 EbD_SensorSeq  EbD_SensorList;
+	     	 SampleInfoSeq     infoSeq;
+	 
+		 while (1) 
+		 {
+       		  	status = EbD_SensorReader->take(
+            		EbD_SensorList,
+            		infoSeq,
+            		LENGTH_UNLIMITED,
+            		ANY_SAMPLE_STATE,
+           		ANY_VIEW_STATE,
+            		ANY_INSTANCE_STATE);
+         		checkStatus(status, "take");
+          		if (status == RETCODE_NO_DATA) 
+			{
+          			continue;
+          		}
+          		for (i = 0; i < EbD_SensorList.length(); i++) 
+	  		{
+				if(infoSeq[i].valid_data)
+				{
+					prtemp <<EbD_SensorList[i].deviceDomain<<",";
+				        prtemp <<EbD_SensorList[i].deviceID <<","<<EbD_SensorList[i].timeOfMeasurement<<",";
+					prtemp <<EbD_SensorList[i].pAvgLoad<<","<<EbD_SensorList[i].iRMS;
+					prtemp <<","<<EbD_SensorList[i].vRMS<<","<<EbD_SensorList[i].zLoad<<","<<EbD_SensorList[i].timeStamp;
+					//cout << prtemp.str().c_str()<<"\n";
+					client->send(test.encode_message("server",prtemp.str().c_str()));
+					prtemp.str("");
+			}
+	  	}
+		status = EbD_SensorReader->return_loan(EbD_SensorList, infoSeq);
+       		checkStatus(status, "return_loan");
+       
+    	}
+
+
+        simpledds->deleteReader(content_reader);
+        delete simpledds;
+		
+	}
+	
 	if (msg[0] == '/') {
 		client->send(test.encode_message("server","unrecognized command"));
 	}

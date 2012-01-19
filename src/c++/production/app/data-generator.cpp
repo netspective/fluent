@@ -25,12 +25,10 @@ void* handle_client(void *arg)
 	int spo2, pulseox;
 	int temp_monitor;
 
-	printf("\n inside the function ");
 	client = *((int*)arg);
 	bzero(request, 1024);
 	/* Read the request */
 	requestlen = 0;
-
 
 	while (!requestlen) 
 	{
@@ -124,81 +122,130 @@ void* handle_client(void *arg)
                 {
 			int m_count=0;
 			std::stringstream ecgfile,rrfile,rrpcfile;
-			string dsp[12];
-			dsp[0] = strtok (request,":");
-			for(int arn=0;arn<11;arn++)
-			dsp[arn] = strtok (NULL,":");
+
+			int loop_count=2; // maximum 3
 			while(1)
 			{
-			time_t rawtime;
-			time ( &rawtime );
-			ecgfile<<rawtime;
-			rrfile<<rawtime<<"rr";
-			rrpcfile<<rawtime<<"rrpc";
-			//dorun(ecgfile.str().c_str(),rrfile.str().c_str(),rrpcfile.str().c_str());	
-			(float)atof(dsp[0].c_str());
-			dorun(ecgfile.str().c_str(),rrfile.str().c_str(),rrpcfile.str().c_str(),(int)atoi(dsp[0].c_str()),(int)atoi(dsp[1].c_str()),(int)atoi(dsp[2].c_str()),(float)atof(dsp[3].c_str()),(float)atof(dsp[4].c_str()),(float)atof(dsp[5].c_str()),(float)atof(dsp[6].c_str()),(float)atof(dsp[7].c_str()),(float)atof(dsp[8].c_str()),(float)atof(dsp[9].c_str()),(float)atof(dsp[10].c_str()));	
-			string ecg,rr,rrpc;
-  			
-			ifstream ifs(ecgfile.str().c_str());
-			ifstream ifrr(rrfile.str().c_str());
-			ifstream ifrrpc(rrpcfile.str().c_str());
-			
+				int heartbeats[3]={100, 105, 110};
+				int ecgsample[3]={100, 105, 110};
+				int internalsample[3]={100, 105, 110};
+				float amplitudenoise=0;
+				float heart_rate_mean=60;
+				float heart_rate_std=1;
+				float lowfreq=0.1;
+				float highfreq=0.25;
+				float lowfreqstd=0.01;
+				float highfreqstd=0.01;
+				float lfhfradio=0.5;
+				time_t rawtime;
+				time ( &rawtime );
+				ecgfile<<rawtime;
+				rrfile<<rawtime<<"rr";
+				rrpcfile<<rawtime<<"rrpc";
+				cout<<"Going to gerenting for : "<<heartbeats[loop_count]<<"\n";
+				dorun(ecgfile.str().c_str(),rrfile.str().c_str(),rrpcfile.str().c_str(),heartbeats[loop_count],ecgsample[loop_count],internalsample[loop_count],amplitudenoise,heart_rate_mean,heart_rate_std,lowfreq,highfreq,lowfreqstd,highfreqstd,lfhfradio);
+				cout<<"Completed genertation\n";
+				string ecg,rr,rrpc;
+
+				ifstream ifs(ecgfile.str().c_str());
+				ifstream ifrr(rrfile.str().c_str());
+				ifstream ifrrpc(rrpcfile.str().c_str());
+
 				while(!ifrr.eof())
 				{
-				if(!ifs.eof())
+					if(!ifs.eof())
+					{
+						if(!ifrrpc.eof())
+						{
+							fflush(stdout);
+							stringstream ecgtemp;
+							ecgtemp<<time(0)<<":";
+							getline( ifs, ecg );
+							for(int i = 0; i < ecg.length(); i++)
+							{
+								if( isspace(ecg[i]) )
+									ecg[i] = ':';
+							}	
+							ecgtemp <<ecg<<":";
+							getline( ifrr, rr );
+							ecgtemp <<rr <<":";
+							getline( ifrrpc, rrpc );
+							ecgtemp<<rrpc;
+							if((strcmp(ecg.c_str(),"")!=0)&&(strcmp(rr.c_str(),"")!=0)&&(strcmp(rrpc.c_str(),"")!=0))
+								send(client, ecgtemp.str().c_str(),1024, MSG_NOSIGNAL);
+							usleep(9999);
+							ecgtemp.str("");
+							int newflag=-1;
+							while(newflag <= 0&&!ifrr.eof())
+							{
+								newflag=recv(client, temp,1024, MSG_NOSIGNAL);
+							}
+						}
+					}
+				}
+				cout<<"Completed publishing\n";
+                                if(loop_count==2)
+                                        loop_count=0;
+                                else
+                                        loop_count++;
+
+				ifs.close();
+				ifrr.close();
+				ifrrpc.close();
+				remove(ecgfile.str().c_str());
+				remove(rrfile.str().c_str());
+				remove(rrpcfile.str().c_str());
+				ecgfile.str("");
+				rrfile.str("");
+				rrpcfile.str("");
+			}
+		}
+		else if(strcmp(request , "sensor") == 0 )
+                {
+			int m_count=0;
+			float timeFloat=0.0;
+			string sensor_data;
+			while(1)
+			{
+				string sensor_data;
+  				ifstream ifs("sensor.dat");
+			
+			
+				while(!ifs.eof())
 				{
-				if(!ifrrpc.eof())
-				{
+				
 					fflush(stdout);
-					stringstream ecgtemp;
-					ecgtemp<<time(0)<<":";
-					getline( ifs, ecg );
-					for(int i = 0; i < ecg.length(); i++)
+					stringstream sensortemp;
+					sensortemp<<time(0)<<":";
+					getline( ifs, sensor_data );
+					for(int i = 0; i < sensor_data.length(); i++)
     					{
-					           if( isspace(ecg[i]) )
-					           ecg[i] = ':';
+					           if( isspace(sensor_data[i]) )
+					           sensor_data[i] = ':';
 					}	
-					ecgtemp <<ecg<<":";
-					getline( ifrr, rr );
-					ecgtemp <<rr <<":";
-					getline( ifrrpc, rrpc );
-					ecgtemp<<rrpc;
-					if((strcmp(ecg.c_str(),"")!=0)&&(strcmp(rr.c_str(),"")!=0)&&(strcmp(rrpc.c_str(),"")!=0))
-					send(client, ecgtemp.str().c_str(),1024, MSG_NOSIGNAL);
-					ecgtemp.str("");			
+					timeFloat=timeFloat+0.01;
+					sensortemp <<sensor_data<<":"<<timeFloat;
+					//cout <<"\n"<<sensortemp.str().c_str()<<"------------------------------"<<m_count++;
+					send(client, sensortemp.str().c_str(),1023, MSG_NOSIGNAL);
+					usleep(55555);
+					sensortemp.str("");			
 					int newflag=-1;
-					while(newflag <= 0&&!ifrr.eof())
+					while(newflag <= 0)
 					{
 						newflag=recv(client, temp,1024, MSG_NOSIGNAL);
-						cout<<"\nloop";
-						
-				
+									
 					}
-					cout <<"\n"<< m_count++ <<" data Recv : "<<temp;
+					
+				
 				}
-				}
-				}
+				ifs.close();
+				sleep(1);
+			}
 
-			
-			ifs.close();
-			ifrr.close();
-			ifrrpc.close();
-			remove(ecgfile.str().c_str());
-			remove(rrfile.str().c_str());
-			remove(rrpcfile.str().c_str());
-			ecgfile.str("");
-			rrfile.str("");
-			rrpcfile.str("");
-
-			cout <<"\n#########################################################################";
-			cout <<"\n NEW LOOP ";
-			cout <<"\n#########################################################################";
-
-		}
 			
 		
 		}
+
 		else
 		{
 			printf("\n Invalid command ");
@@ -252,7 +299,7 @@ int main()
 	pthread_attr_t attr;
 	pthread_t id;
 	char ip_s[20]="127.0.0.1";
-	char port_s[10]="5001";
+	char port_s[10]="5000";
 	server = create_server(ip_s,port_s);
 	while (1) 
 	{	

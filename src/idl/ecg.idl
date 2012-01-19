@@ -1,0 +1,19 @@
+module com {
+	module netspective {
+		module medigy {
+			struct ECG {
+				string deviceDomain;
+				string deviceID;
+				long timeOfMeasurement;
+				double timeInSeconds;
+				double amplitudeMillivolts;
+				short waveformPeak;
+				double standardDeviation;
+				double signalECG;
+
+			};
+			#pragma keylist ECG
+
+		};
+	};
+};

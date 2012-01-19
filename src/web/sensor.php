@@ -65,18 +65,18 @@
 	<div id="content">
 		<div id="content-inner">
 				<h3><a href="http://demo.fluent.netspective.com/medi/index.php" >HOME</a></h3> </br>
-				<h3 onclick="linkedlist('')"> TEMPERATURE </h3> </br>
-				<span id="devices_list"></span>		
-		</br>  <h3>Other Domains</h3>
+				<h3 onclick="linkedlist('')"> EbD - DEVICES </h3> </br>
+				<span id="devices_list"></span>
+				</br>  <h3>Other Domains</h3>
 				<div id="messages-bottom">
 				</div>
 				 <ul id="domain-menu">
 				</br>
 
-    				  <li class=""><a href="http://demo.fluent.netspective.com/medi/bp.php">BP</a></li></br>
-				  <li class=""><a href="http://demo.fluent.netspective.com/medi/pulseox.php">PULSEOX</a></li></br>
+    				  <li class=""><a href="http://demo.fluent.netspective.com/medi/pulseox.php">PULSEOX</a></li></br>
+    				  <li class=""> <a href="http://demo.fluent.netspective.com/medi/temp.php">TEMPERATURE</a></li></br>
     				  <li class=""><a href="http://demo.fluent.netspective.com/medi/ecg.php">ECG</a></li></br>
-    				  <li class=""><a href="http://demo.fluent.netspective.com/medi/sensor.php">EbD_SENSOR</a></li></br>
+    				  <li class=""><a href="http://demo.fluent.netspective.com/medi/bp.php">BP</a></li></br>
        				</ul>
 				<br style="clear: both;">
 
@@ -114,27 +114,16 @@
 <div id="devicebar-inner">
 <div id="device-stat">
 	<h2>Device Statistics</h2>
-	     <h3>Start Time </h3> <span id="start_time">00:00:00</span>
+	      <h3>Start Time </h3> <span id="start_time">00:00:00</span>
 	     <h3>Current  Time </h3> <span id="nxt_time">00:00:00</span>
-	          <h3>Total Bytes Recevied </h3> <span id="total_bytes">0</span> KBytes
+	     <h3> Total Bytes Recevied </h3> <span id="total_bytes">0</span> KBytes
 	     <h3> Total Number of Devices </h3>  <span id="total_devices">0</span>
-	     
-	     <h3> Size of a message</h3> <span id="msg_size">0</span> KBytes
-	     <h3> Total Messages</h3> <span id="total_msg">0</span>
-	     <h3> Average Bytes Per Message</h3> <span id="avg">0.0</span></b> KBytes
+	     <h3>Size of a message</h3> <span id="msg_size">0</span> KBytes
+	     <h3>Total Messages</h3> <span id="total_msg">0</span>
+	     <h3>Average Bytes Per Message</h3> <span id="avg">0.0</span> KBytes
 	     <h3> Messages Per Minute</h3> <span id="tempmesg">0</span>
 	     <h3> Available Devices </h3>  <span id="devices"></span>
-</div>
-</div>
-<div id="alert-stat">
-<h2> Alert Terms </h2> 
-<font style="color:green; font-size:13px;font-weight:900;" >Normal</font></br>
-Temperature  - 95-105</br></br>
-<font style="color:red; font-size:13px;font-weight:900;" >Low</font></br>
-Temperature  - < 95</br>
-</br>
-<font style="color:red; font-size:13px;font-weight:900;" >High</font></br>
-Temperature  - > 105</br>
+	</div>
 </div>
 </div>
 
@@ -146,16 +135,28 @@ function linkedlist(value) {
 		$("#block"+value).css("display","block");
 	} else { $(".block_class").css("display","block"); }
 }
-var ws;
-var url;
+				var msgsize=0;
+				var avgbytes=0.0;
+				var total_msgs=0;
+				var hours=0;
+				var st_time;
+				var ws;
+				var url;
+				var curr_tim = new Date();
+				var hours = curr_tim.getHours();
+				var minute = curr_tim.getMinutes();
+				var seconds =curr_tim.getSeconds();
+				var merid;
+				
+				if(seconds<=9)
+				seconds="0"+seconds;
+				if(minute<=9)
+				minute="0"+minute;
+				if(hours<=9)
+				hours="0"+hours;
 
-				var xVal = 0;
-				var timestamp = 0;
-				var countarr = 0;
-				var temp = 0;
-				var msgsize;
-				var avgbytes;
-				total_msgs=0;
+				var sec_tim;
+				st_time=hours+":"+minute+":"+seconds+"";
 				tim_diff=0
 				sec_tim=0;
 				sec_dat=0;
@@ -165,11 +166,19 @@ var url;
 				time1=0;
                 		timediff=0;
 				count=0;
-				var device_id = "<?php echo $_GET['device_id'];?>";
+
+
+				var xVal = 0;
+				var timestamp = 0;
+				var countarr = 0;
+				var temp = 0;
 				
+				var device_id = "<?php echo $_GET['device_id'];?>";
+				var m_count=0;
 				var series1 = new Array();
 				var series2 = new Array();
 				var series3 = new Array();
+				var series4 = new Array();
 var datalength = 0;
 				//var vdat = [ series1, series2, series3 ];
 			
@@ -181,19 +190,6 @@ var datalength = 0;
 			    var plot = new Array();
 				var arr = new Array();
 				var total=0;
-				var curr_tim = new Date();
-				var hours = curr_tim.getHours();
-				var minute = curr_tim.getMinutes();
-				var seconds =curr_tim.getSeconds();
-				var sec_tim;
-				if(seconds<=9)
-				seconds="0"+seconds;
-				if(minute<=9)
-				minute="0"+minute;
-				if(hours<=9)
-				hours="0"+hours;
-				var sec_tim;
-				st_time=hours+":"+minute+":"+seconds+"";
 				
 $(document).ready(init);
 
@@ -207,11 +203,8 @@ function init() {
 }
 
 function connect() {
-	url = "ws://203.129.254.88:9003/temp";
+	url = "ws://203.129.254.88:9003/sensor";
 
-
-
-	//url = "ws://203.129.254.88:9003/bp";
 	console.log(url);
 	
 	if ("WebSocket" in window) {
@@ -242,13 +235,11 @@ function connect() {
 	};
 	
 	ws.onmessage = function(e) {
-		var message = JSON.parse(e.data); 
-		
-		msgsize=e.data.length/1024;
-		total_msgs++;
-		datalength=datalength+(e.data.length/1024);
-		avgbytes=datalength/total_msgs;
-		
+		var message = JSON.parse(e.data);
+		  msgsize=e.data.length/1024;
+		  total_msgs++;
+		  datalength=datalength+(e.data.length/1024);
+		   avgbytes=datalength/total_msgs;
 		if (message.type == "msg") {
 			if(device_id) { 
 				var message_string = message.value;
@@ -304,14 +295,16 @@ function chat_message2(message,sender) {
 		sec_min=sec_dat.getMinutes();
 		sec_secs=sec_dat.getSeconds();
 		
+
 		if(sec_secs<=9)
 		sec_secs="0"+sec_secs;
 		if(sec_min<=9)
 		sec_min="0"+sec_min;
 		if(sec_hrs<=9)
 		sec_hrs="0"+sec_hrs;
-		sec_tim=sec_hrs+":"+sec_min+":"+sec_secs;
 
+		sec_tim=sec_hrs+":"+sec_min+":"+sec_secs;
+		
 		if(count==0)
 		{
 		time1=second_tim;
@@ -328,7 +321,6 @@ function chat_message2(message,sender) {
 		 temp=0;
 		}
 		count++;
-	
 	var countarr = $.inArray(values[1], arr);
 	temp = countarr;
 	if(countarr=="-1") { 
@@ -367,42 +359,34 @@ function chat_message2(message,sender) {
 			}
 			}).appendTo('#'+block);
 
-			
+
 			
 
-		series1[total] = { label: "TEMPERATURE", data: [] };
-		vdat[total] = [ series1[total] ];
+		series1[total] = { label: "Power", data: [] };
+		series2[total] = { label: "Current", data: [] };
+		series3[total] = { label: "Voltage", data: [] };
+		series4[total] = { label: "Impedence", data: [] };
+		vdat[total] = [ series1[total], series2[total], series3[total], series4[total] ];
 		arr.push(values[1]); 
+		
 		plot[total] = $.plot($("#chart"+total), vdat[total], options);
 		temp = total;
 		total++;
 		$('#total_devices').html(temp+1);
 	}
+	
 	if(total!=0) {
-		getData(values[3], values[4], values[5], values[2], temp,"#chart"+temp);
+		getData(values[6], values[3], values[4], values[5], values[2], temp,"#chart"+temp);
 	}
-
-
-
-					var status = "<h3>Statistics</h3>";
-				
-					if(values[3]<95)
-						status += "<font color='red'>TEMPERATURE: "+values[3]+", LOW </font><br />";
-                                        else if(values[3]>105)
-						status += "<font color='red'>TEMPERATURE: "+values[3]+", HIGH </font><br />";
-					else 
-						status += "<font color='green'>TEMPERATURE: "+values[3]+", NORMAL </font><br />";
-                                          
-                                    
+	
+	
 
 	$('#start_time').html(st_time);	
-	$('#nxt_time').html(sec_tim);	
+	$('#nxt_time').html(sec_tim);			
 	$('#total_bytes').html(datalength.toFixed(3));
 	$('#msg_size').html(msgsize.toFixed(4));
-	$('#avg').html(avgbytes.toFixed(4));
 	$('#total_msg').html(total_msgs);
-	$("#summary"+temp).html(status);
-	
+	$('#avg').html(avgbytes.toFixed(4));
 }
 
 function disconnect() {
@@ -423,29 +407,50 @@ function send() {
 		return;
 	}
 	
-	ws.send("temp");
+	ws.send("sensor");
 }
 
 
-function getData(values3, values4, values5, timestamp, countarr,lab){
+function getData(values6 ,values3, values4, values5, timestamp, countarr,lab){
 					// This could be an ajax call back.
 					var yVal1 = values3;
-					
+					var yVal2 = values4;
+					var yVal3 = values5;
+					var yVal4 = values6;
+
 					var datum1 = [xVal, yVal1];
-					
+					var datum2 = [xVal, yVal2];
+					var datum3 = [xVal, yVal3];
+					var datum4 = [xVal, yVal4];
+
 					vdat[countarr][0].data.push(datum1);
-					if(vdat[countarr][0].data.length>10){
-						// only allow ten points
-						vdat[countarr][0].data = vdat[countarr][0].data.splice(1);
+					vdat[countarr][1].data.push(datum2);
+					vdat[countarr][2].data.push(datum3);
+					vdat[countarr][3].data.push(datum4);
+
+					if(vdat[countarr][0].data.length>400)
+					{
+						vdat[countarr][0].data = vdat[countarr][0].data.splice(100);
+						vdat[countarr][1].data = vdat[countarr][1].data.splice(100);
+						vdat[countarr][2].data = vdat[countarr][2].data.splice(100);
+						vdat[countarr][3].data = vdat[countarr][3].data.splice(100);
 					}
 					xVal++;
+					if(m_count == 100)
+					{
 					plot[countarr].setData(vdat[countarr]);
 					plot[countarr].setupGrid();
 					plot[countarr].draw();
+					m_count = 0;
+					}
+					m_count++;
+					
 				}
 
 			
 			toggle_connect();	
+
+
 </script>
 
 </body></html>

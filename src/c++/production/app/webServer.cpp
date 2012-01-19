@@ -9,7 +9,9 @@ using namespace websocketweb;
 
 int main(int argc, char* argv[]) 
 {
-	std::string host = "netspective-webserver.com";
+	//std::string host = "netspective-webserver.com";
+	std::string host = "203.129.254.88";
+	//std::string host = "172.16.1.70";
 	short port = 9003;
 	std::string full_host;
 	if (argc == 3) 

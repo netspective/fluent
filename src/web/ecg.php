@@ -65,19 +65,22 @@
 	<div id="content">
 		<div id="content-inner">
 				<h3><a href="http://demo.fluent.netspective.com/medi/index.php" >HOME</a></h3> </br>
-				<h3 onclick="linkedlist('')"> TEMPERATURE </h3> </br>
-				<span id="devices_list"></span>		
-		</br>  <h3>Other Domains</h3>
+				<h3 onclick="linkedlist('')"> ECG - DEVICES </h3> </br>
+				<span id="devices_list"></span>
+				
+				</br>  <h3>Other Domains</h3>
 				<div id="messages-bottom">
 				</div>
 				 <ul id="domain-menu">
 				</br>
-
+				
     				  <li class=""><a href="http://demo.fluent.netspective.com/medi/bp.php">BP</a></li></br>
-				  <li class=""><a href="http://demo.fluent.netspective.com/medi/pulseox.php">PULSEOX</a></li></br>
-    				  <li class=""><a href="http://demo.fluent.netspective.com/medi/ecg.php">ECG</a></li></br>
+					<li class=""><a href="http://demo.fluent.netspective.com/medi/pulseox.php">PULSEOX</a></li></br>
+    				    <li class=""> <a href="http://demo.fluent.netspective.com/medi/temp.php">TEMPERATURE</a></li></br>
     				  <li class=""><a href="http://demo.fluent.netspective.com/medi/sensor.php">EbD_SENSOR</a></li></br>
        				</ul>
+
+
 				<br style="clear: both;">
 
 		</div>
@@ -96,7 +99,8 @@
         	<div id="sidebar-inner">
 		       
 			<div id="messages-content">
-
+			<h3> Records For Device  <span id="deviceheading"></span> </h3>  
+ <div id="placeholder" style="width:650px;height:400px; "></div> 
 
 			</div>
 			
@@ -114,27 +118,18 @@
 <div id="devicebar-inner">
 <div id="device-stat">
 	<h2>Device Statistics</h2>
-	     <h3>Start Time </h3> <span id="start_time">00:00:00</span>
-	     <h3>Current  Time </h3> <span id="nxt_time">00:00:00</span>
-	          <h3>Total Bytes Recevied </h3> <span id="total_bytes">0</span> KBytes
-	     <h3> Total Number of Devices </h3>  <span id="total_devices">0</span>
-	     
-	     <h3> Size of a message</h3> <span id="msg_size">0</span> KBytes
-	     <h3> Total Messages</h3> <span id="total_msg">0</span>
-	     <h3> Average Bytes Per Message</h3> <span id="avg">0.0</span></b> KBytes
-	     <h3> Messages Per Minute</h3> <span id="tempmesg">0</span>
-	     <h3> Available Devices </h3>  <span id="devices"></span>
+	
+	 <h3>Start Time </h3> <span id="start_time">00:00:00</span>
+	 <h3>Current  Time </h3> <span id="nxt_time">00:00:00</span>
+	 <h3> Total Bytes Recevied </h3> <span id="total_bytes">0</span> KBytes
+	 <h3> Size of a message</h3> <span id="msg_size"></span> KBytes	
+	 <h3> Total Number of Devices </h3>  <span id="total_devices">1</span>
+	 <h3> Total Messages</h3> <span id="total_msg">0</span>
+	 <h3> Average Bytes Per Messsage</h3> <span id="avg">0.0</span> KBytes
+	 <h3> Messages Per Minute</h3> <span id="tempmesg">0</span>
+	 <h3> Available Devices </h3>  <span id="devices"></span>
+	        
 </div>
-</div>
-<div id="alert-stat">
-<h2> Alert Terms </h2> 
-<font style="color:green; font-size:13px;font-weight:900;" >Normal</font></br>
-Temperature  - 95-105</br></br>
-<font style="color:red; font-size:13px;font-weight:900;" >Low</font></br>
-Temperature  - < 95</br>
-</br>
-<font style="color:red; font-size:13px;font-weight:900;" >High</font></br>
-Temperature  - > 105</br>
 </div>
 </div>
 
@@ -146,16 +141,19 @@ function linkedlist(value) {
 		$("#block"+value).css("display","block");
 	} else { $(".block_class").css("display","block"); }
 }
-var ws;
-var url;
-
-				var xVal = 0;
-				var timestamp = 0;
-				var countarr = 0;
-				var temp = 0;
-				var msgsize;
-				var avgbytes;
-				total_msgs=0;
+				var ws;
+				var curr_time = new Date();
+				var hours = curr_time.getHours();
+				var minute = curr_time.getMinutes();
+				var sec=curr_time.getSeconds();
+				var temp1 = 0;
+				var st_time;
+				var total_msgs=0;
+				var avgbytes=0.0;
+				var url;
+				var msgsize=0;
+				var count=0;
+				var merid = "";
 				tim_diff=0
 				sec_tim=0;
 				sec_dat=0;
@@ -164,36 +162,44 @@ var url;
 				sec_secs=0;
 				time1=0;
                 		timediff=0;
-				count=0;
-				var device_id = "<?php echo $_GET['device_id'];?>";
-				
-				var series1 = new Array();
-				var series2 = new Array();
-				var series3 = new Array();
-var datalength = 0;
-				//var vdat = [ series1, series2, series3 ];
-			
-				var vdat = new Array();
-			    
-			    var options = {
-			    	legend: { show: true, position: "nw" },
-			    	grid: { hoverable: true, clickable: true }	};
-			    var plot = new Array();
-				var arr = new Array();
-				var total=0;
-				var curr_tim = new Date();
-				var hours = curr_tim.getHours();
-				var minute = curr_tim.getMinutes();
-				var seconds =curr_tim.getSeconds();
-				var sec_tim;
-				if(seconds<=9)
-				seconds="0"+seconds;
+
+
+				if(sec<=9)
+				sec="0"+sec;
 				if(minute<=9)
 				minute="0"+minute;
 				if(hours<=9)
 				hours="0"+hours;
+
 				var sec_tim;
-				st_time=hours+":"+minute+":"+seconds+"";
+	
+				st_time=hours+":"+minute+":"+sec;
+
+				var xVal = 0;
+				var timestamp = 0;
+				var countarr = 0;
+				var temp = 0;
+				
+				var device_id = "<?php echo $_GET['device_id'];?>";
+				var series1 = new Array();
+				var series2 = new Array();
+				var series3 = new Array();
+				var datalength = 0;
+				var m_count=0;
+				//var vdat = [ series1, series2, series3 ];
+			
+				var data = [];
+				var datax = [];
+			    
+			        var options = 
+			    	{
+			      		series: { shadowSize: 0 }, 
+			        	yaxis: { min: -1, max: 1 },
+			        	xaxis: { show: false, mode: "time" }
+			   	};
+
+				var arr = new Array();
+				var total=0;
 				
 $(document).ready(init);
 
@@ -207,11 +213,11 @@ function init() {
 }
 
 function connect() {
-	url = "ws://203.129.254.88:9003/temp";
+	url = "ws://203.129.254.88:9003/ecg";
 
 
 
-	//url = "ws://203.129.254.88:9003/bp";
+	//url = "ws://203.129.254.88:9003/ecg";
 	console.log(url);
 	
 	if ("WebSocket" in window) {
@@ -242,13 +248,12 @@ function connect() {
 	};
 	
 	ws.onmessage = function(e) {
-		var message = JSON.parse(e.data); 
+		var message = JSON.parse(e.data);
 		
-		msgsize=e.data.length/1024;
-		total_msgs++;
 		datalength=datalength+(e.data.length/1024);
-		avgbytes=datalength/total_msgs;
-		
+		   msgsize=e.data.length/1024;
+		 total_msgs++;
+		 avgbytes=datalength/total_msgs;
 		if (message.type == "msg") {
 			if(device_id) { 
 				var message_string = message.value;
@@ -257,6 +262,7 @@ function connect() {
 				else {chat_message(status+device_id+"sorry not found"+"-----"+message.value,message.sender);}
 			} else {
 				chat_message2(message.value,message.sender);
+				
 			}
 		} else if (message.type == "participants") {}
 	};
@@ -303,15 +309,15 @@ function chat_message2(message,sender) {
   		sec_hrs=sec_dat.getHours();
 		sec_min=sec_dat.getMinutes();
 		sec_secs=sec_dat.getSeconds();
-		
 		if(sec_secs<=9)
 		sec_secs="0"+sec_secs;
 		if(sec_min<=9)
 		sec_min="0"+sec_min;
 		if(sec_hrs<=9)
 		sec_hrs="0"+sec_hrs;
-		sec_tim=sec_hrs+":"+sec_min+":"+sec_secs;
 
+		sec_tim=sec_hrs+":"+sec_min+":"+sec_secs;
+		
 		if(count==0)
 		{
 		time1=second_tim;
@@ -319,89 +325,68 @@ function chat_message2(message,sender) {
 		
 		timediff=second_tim-time1;
 		//alert(second_tim+" "+time1);
+		
 		if(timediff>=60000)
                 {
 		//alert(timediff);	
 		 $('#tempmesg').html(count);
 		  time1=second_tim;
 		 count=0;
-		 temp=0;
+		 temp1=0;
 		}
 		count++;
-	
 	var countarr = $.inArray(values[1], arr);
-	temp = countarr;
-	if(countarr=="-1") { 
-			var block = "block"+total;
-			$('<div/>', {
-			id: block,
-			class: "block_class"  
-			}).appendTo('#messages-content');
-
-			$('<h2/>', {
-			id: "heading"+total,  
-			}).appendTo('#'+block);
-			
-			$("#heading"+total).html("Record for "+values[1]);
-			$('#devices').append(values[1]+"<br /><br />");
-			$('#devices_list').append("<a href='javascript:void()' onclick=\"linkedlist('"+total+"')\">"+values[1]+"</a><br /><br />");
-
-			$('<div/>', {
-			id: "chart"+total,  
-			class: "chart_div",  
-			css: {  
-				width:'550px',
-				height:'360px'  
-			}
-			}).appendTo('#'+block);
-			
-			$('<div/>', {
-			id: "summary"+total,  
-			class: "summary",  
-			}).appendTo('#'+block);
-
-			$('<div/>', {
-			id: "clear"+total,  
-			css: {  
-				clear:'both'
-			}
-			}).appendTo('#'+block);
-
-			
-			
-
-		series1[total] = { label: "TEMPERATURE", data: [] };
-		vdat[total] = [ series1[total] ];
-		arr.push(values[1]); 
-		plot[total] = $.plot($("#chart"+total), vdat[total], options);
-		temp = total;
-		total++;
-		$('#total_devices').html(temp+1);
-	}
-	if(total!=0) {
-		getData(values[3], values[4], values[5], values[2], temp,"#chart"+temp);
-	}
-
-
-
-					var status = "<h3>Statistics</h3>";
+	if(countarr == "-1")
+	{
 				
-					if(values[3]<95)
-						status += "<font color='red'>TEMPERATURE: "+values[3]+", LOW </font><br />";
-                                        else if(values[3]>105)
-						status += "<font color='red'>TEMPERATURE: "+values[3]+", HIGH </font><br />";
-					else 
-						status += "<font color='green'>TEMPERATURE: "+values[3]+", NORMAL </font><br />";
-                                          
-                                    
+		$("#heading"+total).html("Record for "+values[1]);
+		$("#total_devices").html(total++);
+		$('#deviceheading').append(values[1]+"<br/><br/>");
+		$('#devices').append(values[1]+"<br/><br/>");
+		$('#devices_list').append("<a href='javascript:void()' onclick=\"linkedlist('"+total+"')\">"+values[1]+"</a><br /><br />");
+		arr.push(values[1]); 
 
+
+
+	}
+
+	
+	var y = values[4];
+	var x = values[3];
+	
+      	
+	if ( data.length > 1000)
+	{
+			
+		        data = data.slice(1);
+			datax = datax.slice(1);
+	}
+	
+	
+ 	data.push(y);
+	datax.push(x);
+ 	var res = [];
+	m_count++;
+        for (var i = 0; i < data.length; ++i) 
+	{
+        	res.push([datax[i],data[i]]);
+	}
+
+	if(m_count==400) {
+	var plot = $.plot($("#placeholder"), [ res ], options);
+	
+	plot.setData([ res ]);
+        plot.draw();
+	m_count=0;
+	}
+	
 	$('#start_time').html(st_time);	
-	$('#nxt_time').html(sec_tim);	
+	$('#nxt_time').html(sec_tim);			
 	$('#total_bytes').html(datalength.toFixed(3));
 	$('#msg_size').html(msgsize.toFixed(4));
-	$('#avg').html(avgbytes.toFixed(4));
+	$('#total_devices').html(1);
 	$('#total_msg').html(total_msgs);
-	$("#summary"+temp).html(status);
+	$('#avg').html(avgbytes.toFixed(4));
 	
 }
 
@@ -423,29 +408,12 @@ function send() {
 		return;
 	}
 	
-	ws.send("temp");
+	ws.send("ecg");
 }
 
 
-function getData(values3, values4, values5, timestamp, countarr,lab){
-					// This could be an ajax call back.
-					var yVal1 = values3;
-					
-					var datum1 = [xVal, yVal1];
-					
-					vdat[countarr][0].data.push(datum1);
-					if(vdat[countarr][0].data.length>10){
-						// only allow ten points
-						vdat[countarr][0].data = vdat[countarr][0].data.splice(1);
-					}
-					xVal++;
-					plot[countarr].setData(vdat[countarr]);
-					plot[countarr].setupGrid();
-					plot[countarr].draw();
-				}
+toggle_connect();
 
-			
-			toggle_connect();	
 </script>
 
 </body></html>
