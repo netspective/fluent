@@ -1,15 +1,13 @@
 ############################################################################################
 #                                                                                          #
-#                 Medical Device Gateway Implementation                                    #
+#                 Netspective Fluent M2M Platform                                          #
 #                                                                                          #
 ############################################################################################
 
 OVERVIEW
 ========
-  Medical Device Gateway consists of interfaces to retrieve the medical data from the connected 
-medical devices in the hospital enterprise. It formats the data from the medical device into 
-standard patient information and transmits it into the hospital EHR and PHR. 
-It also provides the required information to the medical device data center for archival.
+Netspective Fluent consists of interfaces to retrieve data from connected devices through RS232, 
+Ethernet, USB, GSM, and other connection channels. 
 
 
 REQUIREMENTS
