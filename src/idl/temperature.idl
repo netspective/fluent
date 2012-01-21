@@ -1,0 +1,13 @@
+module com {
+	module netspective {
+		module medigy {
+			struct Temperature {
+				string deviceDomain;
+				string deviceID;
+				long timeOfMeasurement;
+				short temp;
+			};
+			#pragma keylist Temperature
+		};
+	};
+};
