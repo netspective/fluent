@@ -16,7 +16,6 @@ The requirements for compiling and running :
 
 * OpenSplice DDS v5.x  
 * BOOST v1.40 (or higher)
-* BOOST Process (Already shipped with SimD)
 * GCC/G++ v4.1 (or higher)
 * Log for c++ 1.0 (or higher)
 
