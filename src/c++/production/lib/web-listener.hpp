@@ -16,10 +16,14 @@ class web_server_handler : public websocketpp::connection_handler {
 public:
 	pthread_attr_t attr;
         pthread_t id;
-
+	//std::string name_topics[100];
+	std::string name_topics;
+	//int topic_count;
 	websocketpp::session_ptr temp_client;
 	std::string temp_msg;
-
+	pthread_t pt_ary[100];
+	std::string currentdevice[100];
+	int pthread_count;
 	web_server_handler() {}
 	virtual ~web_server_handler() {}
 	
@@ -45,7 +49,7 @@ private:
 	std::string get_con_id(websocketpp::session_ptr s);
 	
 	void send_to_all(std::string data);
-	
+	static void *startTopicsThread(void *arg);
 	static void *startThread(void *arg);
 	// list of outstanding connections
 	std::map<websocketpp::session_ptr,std::string> m_connections;

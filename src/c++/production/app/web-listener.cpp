@@ -20,6 +20,8 @@
 #include <dds/reader.hpp>
 #include <dds/traits.hpp>
 #include <dds/dds.hpp>
+#define SEMI ":"
+#define COMMA ","
 
 using websocketweb::web_server_handler;
 using websocketpp::session_ptr;
@@ -60,12 +62,297 @@ void web_server_handler::on_message(session_ptr client,const std::string &msg)
 {
 	temp_client=client;
 	temp_msg=msg;
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&id, &attr, startThread, this);
+
+	if(msg.find("dynamiclist")!=string::npos)
+	{
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+		pthread_create(&id, &attr,startTopicsThread, this);
+
+	}
+	if(msg.find("START")!=string::npos)
+	{
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+		pthread_create(&pt_ary[pthread_count], &attr, startThread, this);
+		stringstream checkdev;
+		checkdev<<msg;
+		currentdevice[pthread_count]=checkdev.str();
+		//cout<<"\ncount :"<<pthread_count<<"\n";
+		pthread_count++;
+		
+		
+	}
+	else if(msg.find("STOP")!=string::npos)
+	{
+		size_t pos;
+		string str2 = msg.substr (msg.rfind(":")); 
+		for(int checkn=0;checkn<pthread_count;checkn++)
+		{
+			
+			if(currentdevice[checkn].find(str2)!=string::npos)
+			{
+				pthread_cancel(pt_ary[checkn]);
+				currentdevice[checkn]="";
+				cout<<"\n\Stopping Device  "<<currentdevice[checkn]<<"\n\n";
+			}
+			
+		}
+		
+	}
+	else
+	{
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+		pthread_create(&id, &attr, startThread, this);
+	}
+
 
 }
+void *web_server_handler::startTopicsThread(void *arg)
+{
+	stringstream topictemp,devicestream;
+	web_server_handler test = *((web_server_handler*)arg);
+	session_ptr client=test.temp_client;
 
+	SimpleDDS *mgr = new SimpleDDS();
+	Subscriber_var builtinSubscriber = mgr->participant->get_builtin_subscriber();
+	DataReader_var reader = builtinSubscriber->lookup_datareader("DCPSTopic");
+	TopicBuiltinTopicDataDataReader_var participantReader = TopicBuiltinTopicDataDataReader::_narrow(reader);
+	TopicBuiltinTopicDataSeq data;
+	ReturnCode_t status;
+	SampleInfoSeq info;
+	while(1)
+	{
+	 test.name_topics="";
+	status=participantReader->take ( data, info, LENGTH_UNLIMITED,DDS::ANY_SAMPLE_STATE,DDS::ANY_VIEW_STATE,DDS::ANY_INSTANCE_STATE) ;
+		if (status == RETCODE_NO_DATA) 
+				{
+          				continue;
+          			}
+        for (int i = 0; i < data.length(); i++)
+        {
+        	if(info[i].valid_data)
+                {
+                	if((data[i].name[0]!='D')&&(data[i].name[0]!='d'))
+                        {
+				
+				topictemp<<data[i].name;
+				test.name_topics=test.name_topics+";"+topictemp.str();
+				topictemp.str("");
+
+			if((test.name_topics.find("BloodPressure"))!=string::npos)
+			{
+		stringstream prtemp;
+		SimpleDDS *simpledds;
+		BloodPressureTypeSupport_var typesupport;
+    		DataReader_ptr reader;
+    		BloodPressureDataReader_var bpReader;
+    		ReturnCode_t status;
+		int i=0;
+		DDS::TopicQos tQos;
+		getQos(tQos);
+        	tQos.durability_service.history_depth= 1024;
+		simpledds = new SimpleDDS(tQos);
+		typesupport = new BloodPressureTypeSupport();
+    		reader = simpledds->subscribe(typesupport);
+    		bpReader = BloodPressureDataReader::_narrow(reader);
+   		BloodPressureSeq  bpList;
+     		SampleInfoSeq     infoSeq;
+		int loopexit=0;
+		while (loopexit!=5) 
+		{
+				
+        		 	status = bpReader->take(
+        		    	bpList,
+        		    	infoSeq,
+        		    	LENGTH_UNLIMITED,
+        		    	ANY_SAMPLE_STATE,
+        		   	ANY_VIEW_STATE,
+        		    	ANY_INSTANCE_STATE);
+        		 	//checkStatus(status, "take");
+        		  	loopexit++;
+          			for (i = 0; i < bpList.length(); i++) 
+	  			{
+					if(infoSeq[i].valid_data)
+					{
+
+						
+						prtemp<<bpList[i].deviceID;
+						if((test.name_topics.find(prtemp.str()))==string::npos)
+						{
+
+				test.name_topics=test.name_topics+","+prtemp.str();
+						}
+						
+						prtemp.str("");
+					}
+				}
+			status = bpReader->return_loan(bpList, infoSeq);
+	       		checkStatus(status, "return_loan");
+			sleep(1);
+			}
+       		
+		}
+	
+	
+	if((test.name_topics.find("PulseOximeter"))!=string::npos)
+	{
+		stringstream prtemp;
+		SimpleDDS *simpledds;
+		PulseOximeterTypeSupport_var typesupport;
+	    	DataReader_ptr reader;
+	    	PulseOximeterDataReader_var bpReader;
+	    	ReturnCode_t status;
+		int i=0;
+		DDS::TopicQos tQos;
+		getQos(tQos);
+	        tQos.durability_service.history_depth= 1024;
+		simpledds = new SimpleDDS(tQos);
+		typesupport = new PulseOximeterTypeSupport();
+	    	reader = simpledds->subscribe(typesupport);
+	    	bpReader = PulseOximeterDataReader::_narrow(reader);
+	   	PulseOximeterSeq  bpList;
+	     	SampleInfoSeq     infoSeq;
+
+		int loopexit=0;
+		while (loopexit!=5) 
+		{
+			status = bpReader->take(bpList,	infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
+         		//checkStatus(status, "take");
+          		loopexit++;
+          		for (i = 0; i < bpList.length(); i++) 
+	  		{
+				if(infoSeq[i].valid_data)
+					{
+						prtemp<<bpList[i].deviceID;
+						if((test.name_topics.find(prtemp.str()))==string::npos)
+						{
+
+				test.name_topics=test.name_topics+","+prtemp.str();
+						}
+						
+						prtemp.str("");
+						
+					}
+					
+			}
+			status = bpReader->return_loan(bpList, infoSeq);
+	       		checkStatus(status, "return_loan");
+	       		
+			sleep(1);
+			
+		}
+
+		}
+		if((test.name_topics.find("Temperature"))!=string::npos)
+		{
+			stringstream prtemp;
+			 SimpleDDS *simpledds;
+			 TemperatureTypeSupport_var typesupport;
+    	 		 DataReader_ptr reader;
+		    	 TemperatureDataReader_var bpReader;
+		    	 ReturnCode_t status;
+			 int i=0;
+			 DDS::TopicQos tQos;
+			 getQos(tQos);
+		         simpledds = new SimpleDDS(tQos);
+			 typesupport = new TemperatureTypeSupport();
+			 reader = simpledds->subscribe(typesupport);
+	    		bpReader = TemperatureDataReader::_narrow(reader);
+	   	   	 TemperatureSeq  bpList;
+		     	 SampleInfoSeq     infoSeq;
+			 int loopexit=0;
+			while (loopexit!=5) 
+			{
+		         	status = bpReader->take(
+            			bpList,
+            			infoSeq,
+            			LENGTH_UNLIMITED,
+		            	ANY_SAMPLE_STATE,
+           			ANY_VIEW_STATE,
+            			ANY_INSTANCE_STATE);
+         			//checkStatus(status, "take");
+		          	loopexit++;
+          			for (i = 0; i < bpList.length(); i++) 
+	  			{
+					if(infoSeq[i].valid_data)
+					{
+						prtemp<<bpList[i].deviceID;
+						if((test.name_topics.find(prtemp.str()))==string::npos)
+						{
+
+					test.name_topics=test.name_topics+","+prtemp.str();
+						}
+						
+						prtemp.str("");
+					}
+					
+				}
+				status = bpReader->return_loan(bpList, infoSeq);
+       				checkStatus(status, "return_loan");
+			sleep(1);
+			}
+		}
+		if((test.name_topics.find("ECG"))!=string::npos)
+		{
+			stringstream prtemp;
+			 SimpleDDS *simpledds;
+	 		 ECGTypeSupport_var typesupport;
+		    	 DataReader_ptr reader;
+		    	 ECGDataReader_var ecgReader;
+		    	 ReturnCode_t status;
+			 int i=0;
+	 	         simpledds = new SimpleDDS();
+			 typesupport = new ECGTypeSupport();
+			 reader = simpledds->subscribe(typesupport);
+	    		ecgReader = ECGDataReader::_narrow(reader);
+	   	   	ECGSeq  ecgList;
+		     	 SampleInfoSeq     infoSeq;
+			 int m_count=0;
+	 		  int loopexit=0;
+			while (loopexit!=10) 
+			{
+         			status = ecgReader->take(
+         		   	ecgList,
+         		   	infoSeq,
+         		   	LENGTH_UNLIMITED,
+         		   	ANY_SAMPLE_STATE,
+         		  	ANY_VIEW_STATE,
+         		   	ANY_INSTANCE_STATE);
+         			//checkStatus(status, "take");
+         		 
+				loopexit++;
+         		 	for (i = 0; i < ecgList.length(); i++) 
+	 		 	{
+					if(infoSeq[i].valid_data)
+					{
+						prtemp<<ecgList[i].deviceID;
+						if((test.name_topics.find(prtemp.str()))==string::npos)
+						{
+
+						test.name_topics=test.name_topics+","+prtemp.str();
+						}
+						
+						prtemp.str("");
+					}
+						
+				}
+				status = ecgReader->return_loan(ecgList, infoSeq);
+       				checkStatus(status, "return_loan");
+	  		}
+			
+       
+    		}
+
+                }
+                        
+                }
+        }
+	client->send(test.encode_message("server",test.name_topics));
+
+	}
+}
 void *web_server_handler::startThread(void *arg)
 {
 	
@@ -73,7 +360,17 @@ void *web_server_handler::startThread(void *arg)
 	 session_ptr client=test.temp_client;
 	 std::string &msg=test.temp_msg;
 	 std::cout << "\n\n"<<"Recevied Message :"<<msg<<"\n";
-	 if (msg == "bp") 
+	 char *pchsplit;
+         int idev=0;
+  	 char strDetails[4][20];
+	 pchsplit = strtok ((char*)msg.c_str(),":");
+	 while (pchsplit != NULL)
+	 {
+	        strcpy(strDetails[idev++],pchsplit);
+		pchsplit = strtok (NULL, ":");
+	 }
+
+	 if (!strcmp(msg.c_str(),"bp"))
 	 {
 	 std::stringstream prtemp;
 	 SimpleDDS *simpledds;
@@ -126,7 +423,7 @@ void *web_server_handler::startThread(void *arg)
 	std::cout << "message from client " << client << ": " << msg << std::endl;
 	}
 
-	if (msg == "pulseox")
+	if (!strcmp(msg.c_str(),"pulseox"))
 	{
 		std::stringstream prtemp;
 		SimpleDDS *simpledds;
@@ -182,7 +479,7 @@ void *web_server_handler::startThread(void *arg)
              delete simpledds;
 
 	}
-	if (msg == "temp")
+	if (!strcmp(msg.c_str(),"temp"))
 	{
 		std::stringstream prtemp;
 	 	
@@ -241,7 +538,7 @@ void *web_server_handler::startThread(void *arg)
 		simpledds->deleteReader(reader);
        		delete simpledds;
 	}	
-	if (msg == "ecg")
+	if (!strcmp(msg.c_str(),"ecg"))
 	{
 		std::stringstream prtemp;
 	 	
@@ -296,9 +593,387 @@ void *web_server_handler::startThread(void *arg)
        		delete simpledds;
 	}
 
-	
 	if (msg[0] == '/') {
 		client->send(test.encode_message("server","unrecognized command"));
+	}
+	if(!strcmp(strDetails[0],"START"))
+	{
+		cout<<"\nDomain : "<<strDetails[1]<<"   Device : "<<strDetails[2];
+		if(!strcmp(strDetails[1],"BP"))
+		{
+			int socketDescriptor;
+			unsigned short int serverPort;
+			struct sockaddr_in serverAddress;
+			struct hostent *hostInfo;
+			char buf[1024], c;
+			int spawn,flag,sizebuf,port;
+			string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
+			stringstream prtemp;
+			SimpleDDS *simpledds;
+			BloodPressureTypeSupport_var typesupport;
+			DataWriter_ptr writer;
+			BloodPressureDataWriter_var bpWriter;
+			DDS::TopicQos tQos;
+			getQos(tQos);
+			simpledds = new SimpleDDS(tQos);
+			typesupport = new BloodPressureTypeSupport();
+			writer = simpledds->publish(typesupport);
+			bpWriter = BloodPressureDataWriter::_narrow(writer);
+			hostInfo = gethostbyname("172.16.1.91");
+			if (hostInfo == NULL) 
+			{
+					
+				exit(1);
+			}
+			
+			serverPort=5000;
+			cin.get(c); 
+			socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+		
+			if (socketDescriptor < 0) 
+			{
+					
+				exit(1);
+			}
+			serverAddress.sin_family = hostInfo->h_addrtype;
+			memcpy((char *) &serverAddress.sin_addr.s_addr,hostInfo->h_addr_list[0], hostInfo->h_length);
+			serverAddress.sin_port = htons(serverPort);
+			if (connect(socketDescriptor,(struct sockaddr *) &serverAddress,sizeof(serverAddress)) < 0) 
+			{
+			
+				exit(1);
+			}
+
+			strcpy(buf,"BP");
+			if (send(socketDescriptor, buf, strlen(buf) + 1, 0) < 0)
+			{
+	
+				close(socketDescriptor);
+				
+				exit(1);
+			}
+		
+			flag=0;
+			BloodPressure data;
+			data.deviceID = DDS::string_dup(strDetails[2]);
+			data.deviceDomain = DDS::string_dup("BP");
+			//data.deviceID = DDS::string_dup(deviceid.c_str());
+			//data.deviceDomain = DDS::string_dup(domainid.c_str());
+	
+			while (1) 
+			{
+					
+				while ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
+				{
+				buf[sizebuf]='\0';
+				char * pch;
+				prtemp<<domainid<<","<<deviceid<<",";
+				pch = strtok (buf,":");
+				data.timeOfMeasurement = atol(pch);
+				prtemp<<data.timeOfMeasurement<<",";
+				pch = strtok (NULL, ":");
+				data.systolicPressure = (short)atoi(pch);		
+				prtemp<<data.systolicPressure<<",";
+				pch = strtok (NULL, ":");
+				data.diastolicPressure = (short)atoi(pch);
+				prtemp<<data.diastolicPressure<<",";
+				pch = strtok (NULL, ":");
+				data.pulseRatePerMinute = (short)atoi (pch);
+				prtemp<<data.pulseRatePerMinute;
+				bpWriter->write(data, NULL);
+				prtemp.str("");
+				}
+		
+			}
+		
+	
+			simpledds->deleteWriter(writer);
+			delete simpledds;
+		}
+		if(!strcmp(strDetails[1],"PULSEOX"))
+		{
+			int socketDescriptor;
+			unsigned short int serverPort;
+			struct sockaddr_in serverAddress;
+			struct hostent *hostInfo;
+			char buf[1024], c;
+			int sizebuf,port;
+			string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
+			stringstream prtemp;
+			SimpleDDS *simpledds;
+			PulseOximeterTypeSupport_var typesupport;
+			DataWriter_ptr writer;
+			PulseOximeterDataWriter_var bpWriter;
+			DDS::TopicQos tQos;
+			getQos(tQos);
+
+			simpledds = new SimpleDDS(tQos);
+			typesupport = new PulseOximeterTypeSupport();
+			writer = simpledds->publish(typesupport);
+			bpWriter = PulseOximeterDataWriter::_narrow(writer);
+			hostInfo=gethostbyname("172.16.1.91");
+	
+			if (hostInfo == NULL) 
+			{	
+				
+			}
+			serverPort=5000;
+			cin.get(c); 
+			socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+			if (socketDescriptor < 0) 
+			{
+				
+				exit(1);
+			}
+			serverAddress.sin_family = hostInfo->h_addrtype;
+			memcpy((char *) &serverAddress.sin_addr.s_addr,	hostInfo->h_addr_list[0], hostInfo->h_length);
+			serverAddress.sin_port = htons(serverPort);
+
+			if (connect(socketDescriptor,(struct sockaddr *) &serverAddress,sizeof(serverAddress)) < 0) 
+			{
+				exit(1);
+			}
+
+			strcpy(buf,"PULSEOX");
+			if (send(socketDescriptor, buf, strlen(buf) + 1, 0) < 0)
+			{
+		
+				close(socketDescriptor);
+				exit(1);
+			}
+
+			PulseOximeter data;
+
+		
+			data.deviceID = DDS::string_dup(strDetails[2]);
+			data.deviceDomain = DDS::string_dup(strDetails[1]);
+			while (1) 
+			{
+	
+				while ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
+				{
+					buf[sizebuf]='\0';
+					char * pch;
+					pch = strtok (buf,":");
+					data.timeOfMeasurement = atol(pch);
+					prtemp<<data.timeOfMeasurement<<",";
+					pch = strtok (NULL,":");
+					data.SPO2 = (short)atoi(pch);		
+					prtemp<<data.SPO2<<",";
+					pch = strtok (NULL,":");
+					data.pulseRatePerMinute = (short)atoi (pch);
+					prtemp<<data.pulseRatePerMinute;
+					bpWriter->write(data, NULL);
+					prtemp.str("");
+				}
+			}
+
+
+
+			simpledds->deleteWriter(writer);
+			delete simpledds;
+		}
+
+		if(!strcmp(strDetails[1],"TEMP"))
+		{
+			int socketDescriptor;
+			unsigned short int serverPort;
+			struct sockaddr_in serverAddress;
+			struct hostent *hostInfo;
+			char buf[1024], c;
+			int sizebuf,port;
+			string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
+			stringstream prtemp;
+		
+			SimpleDDS *simpledds;
+			TemperatureTypeSupport_var typesupport;
+			DataWriter_ptr writer;
+			TemperatureDataWriter_var bpWriter;
+
+			DDS::TopicQos tQos;
+			getQos(tQos);
+			simpledds = new SimpleDDS(tQos);
+			typesupport = new TemperatureTypeSupport();
+			writer = simpledds->publish(typesupport);
+			bpWriter = TemperatureDataWriter::_narrow(writer);
+			hostInfo = gethostbyname("172.16.1.91");
+	
+			if (hostInfo == NULL) 
+			{
+				exit(1);
+			}
+			serverPort=5000;
+			cin.get(c); 
+			socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+			if (socketDescriptor < 0) 
+			{
+				exit(1);
+			}			
+			serverAddress.sin_family = hostInfo->h_addrtype;
+			memcpy((char *) &serverAddress.sin_addr.s_addr,hostInfo->h_addr_list[0], hostInfo->h_length);
+			serverAddress.sin_port = htons(serverPort);
+
+			if (connect(socketDescriptor,(struct sockaddr *) &serverAddress,sizeof(serverAddress)) < 0) 
+			{
+				exit(1);
+			}
+	
+			strcpy(buf,"TEMPERATURE");
+			if (send(socketDescriptor, buf, strlen(buf) + 1, 0) < 0)
+			{
+				close(socketDescriptor);
+				exit(1);
+			}
+			Temperature data;
+			
+			data.deviceID = DDS::string_dup(strDetails[2]);
+			data.deviceDomain = DDS::string_dup(strDetails[1]);
+			while (1) 
+			{
+				while ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
+				{
+				buf[sizebuf] = '\0';
+				char * pch;
+				pch = strtok (buf,":");
+				data.timeOfMeasurement = atol(pch);
+				prtemp<<data.timeOfMeasurement<<",";
+				pch = strtok (NULL, ":");
+				data.temp = (short)atoi(pch);
+				prtemp<<data.temp;
+				bpWriter->write(data, NULL);
+				prtemp.str("");
+				}
+			}
+	
+		
+			simpledds->deleteWriter(writer);
+			delete simpledds;
+		}
+
+		if(!strcmp(strDetails[1],"ECG"))
+		{
+			int socketDescriptor;
+			unsigned short int serverPort;
+			struct sockaddr_in serverAddress;
+			struct hostent *hostInfo;
+			char buf[1024], c;
+			int spawn,flag,sizebuf,port,heartbeats,ecgsample,internalsample;
+			float amplitudenoise,heart_rate_mean,heart_rate_std,lowfreq,highfreq,lowfreqstd,highfreqstd,lfhfradio;
+			string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
+			stringstream prtemp,datacommand;
+			heartbeats=256;                 
+			ecgsample=256;               
+			internalsample=256;
+			amplitudenoise=0.0;          
+			heart_rate_mean=60.0;        
+			heart_rate_std=1.0;          
+			lowfreq=0.1;             
+			highfreq=0.25;           
+			lowfreqstd=0.01;         
+			highfreqstd=0.01;        
+			lfhfradio=0.5; 
+
+			SimpleDDS *simpledds;
+			ECGTypeSupport_var typesupport;
+			DataWriter_ptr writer;
+			ECGDataWriter_var ecgWriter;
+			simpledds = new SimpleDDS();
+			typesupport = new ECGTypeSupport();
+			writer = simpledds->publish(typesupport);
+			ecgWriter = ECGDataWriter::_narrow(writer);
+			hostInfo = gethostbyname("172.16.1.91");
+			if (hostInfo == NULL) 
+			{
+			
+			}
+			serverPort=5000;
+			cin.get(c); 
+			socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+			if (socketDescriptor < 0) 
+			{	
+		
+			}	
+			serverAddress.sin_family = hostInfo->h_addrtype;
+			memcpy((char *) &serverAddress.sin_addr.s_addr,hostInfo->h_addr_list[0], hostInfo->h_length);
+			serverAddress.sin_port = htons(serverPort);
+			if (connect(socketDescriptor,(struct sockaddr *) &serverAddress,sizeof(serverAddress)) < 0) 
+			{
+			}
+
+	datacommand<<"ECG"<<SEMI<<heartbeats<<SEMI<<ecgsample<<SEMI<<internalsample<<SEMI<<amplitudenoise;
+	datacommand<<SEMI<<heart_rate_mean<<SEMI<<heart_rate_std<<SEMI<<lowfreq<<SEMI<<highfreq<<SEMI<<lowfreqstd<<SEMI<<highfreqstd<<SEMI<<lfhfradio;
+			strcpy(buf,datacommand.str().c_str());
+			if (send(socketDescriptor, buf, strlen(buf) + 1, 0) < 0)
+			{
+				close(socketDescriptor);
+			}
+	
+			flag=0;
+			ECG data;
+
+			
+			//data.deviceID = DDS::string_dup(strDetails[1]);
+			data.deviceID = DDS::string_dup("ECG_LAB44");
+			data.deviceDomain = DDS::string_dup(strDetails[2]);
+			long count=0;
+			while (1) 
+			{
+			
+				if ((sizebuf=recv(socketDescriptor, buf, 1024,  MSG_NOSIGNAL)) > 0) 
+				{
+					cout<<"\n"<<buf;
+					buf[sizebuf]='\0';
+					string datasplit[7];
+					datasplit[0] = strtok (buf,SEMI);
+					datasplit[1] = strtok (NULL,SEMI);
+					datasplit[2] = strtok (NULL,SEMI);
+					datasplit[3] = strtok (NULL,SEMI);
+					datasplit[4] = strtok (NULL,SEMI);
+					datasplit[5] = strtok (NULL,SEMI);
+					prtemp<<domainid<<COMMA<<deviceid<<COMMA;
+					data.timeOfMeasurement = atol(datasplit[0].c_str());
+					prtemp<<data.timeOfMeasurement<<COMMA;
+		
+					data.timeInSeconds = (double)atof(datasplit[1].c_str());		
+					prtemp<<data.timeInSeconds<<COMMA;
+		
+		                        data.amplitudeMillivolts = (double)atof(datasplit[2].c_str());   
+		                        prtemp<<data.amplitudeMillivolts<<COMMA;
+					
+					data.waveformPeak = (short)atoi(datasplit[3].c_str());   
+		                        prtemp<<data.waveformPeak<<COMMA;
+							
+					data.standardDeviation = (double)atof(datasplit[4].c_str());
+					prtemp<<data.standardDeviation<<COMMA;
+	
+					data.signalECG = (double)atof(datasplit[5].c_str());
+					prtemp<<data.signalECG;
+		
+
+					if (RETCODE_OUT_OF_RESOURCES  == ecgWriter->write(data, NULL))
+					{ cout << "\n Out of Resource ";}
+					int newflag=-1;
+					while(newflag <= 0)
+					{
+							newflag=send(socketDescriptor,prtemp.str().c_str(),1024,  MSG_NOSIGNAL);
+						
+							
+					}
+					prtemp.str("");
+					fflush(stdout);
+						
+					}
+		
+		
+	
+
+				}
+
+
+			simpledds->deleteWriter(writer);
+			delete simpledds;
+		}
+		
 	}
 	
 	// create JSON message to send based on msg

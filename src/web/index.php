@@ -98,6 +98,12 @@
 
 
 <div id="messages-content">
+<ul id="device-manage">
+        </br>
+      <li style="font-family: Georgia,'Times New Roman',Times,serif;font-size:14px;color:#000000;" class=""><a href="http://demo.fluent.netspective.com/medi/device_manage.php">MANAGE DEVICES</a></li></br>
+
+    </ul>
+
   <h2>Domains</h2>
 
  <ul id="domain-menu">
@@ -106,7 +112,7 @@
       <li class=""><a href="http://demo.fluent.netspective.com/medi/pulseox.php">PULSEOX</a></li></br>
       <li class=""> <a href="http://demo.fluent.netspective.com/medi/temp.php">TEMPERATURE</a></li></br>
       <li class=""><a href="http://demo.fluent.netspective.com/medi/ecg.php">ECG</a></li></br>
-      <li class=""><a href="http://demo.fluent.netspective.com/medi/sensor.php">EbD_SENSOR</a></li></br>
+
       
     </ul>
 
