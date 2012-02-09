@@ -37,7 +37,7 @@ OpenSplice DDS is one of several open source implementation of the OMG Data Dist
         
 * Extract the downloaded tar file with following command, after extracted the tar file you could find the HDE folder and configure the release.com with installation directory.
 
-      	$ tar -xvf OpenSpliceDDSV5.4.1-x86_64.linux2.6-gcc412-gnuc25-HDE.tar.gz
+        $ tar -xvf OpenSpliceDDSV5.4.1-x86_64.linux2.6-gcc412-gnuc25-HDE.tar.gz
 
 * Use the given commands to setup the environment and start DDS service
 
@@ -49,9 +49,9 @@ OpenSplice DDS is one of several open source implementation of the OMG Data Dist
 
 Boost libraries are intended to be widely used, and usable across a broad spectrum of applications. 
 
-* Download the Boost.1.48.0 version of boost library [Click here to download](http://www.boost.org/users/download/)
+* Download  Boost.1.48.0 version of boost library [Click here to download](http://www.boost.org/users/download/)
 
-* Extract the boost.1.48.0.tar.gz tar file using the following command
+* Extract  boost.1.48.0.tar.gz file using the following command
 
       	$ tar -xvf boost_1_48_0.tar.gz
 
@@ -70,17 +70,16 @@ Boost libraries are intended to be widely used, and usable across a broad spectr
 
 * GCC is an integrated distribution of compilers for several major programming languages.
 
-        $ yum install "Develoment Tools"
-      
-        
+        $ yum groupinstall "Development Tools"
+              
 <h6>LOG FOR C++</h6>
 
 * Log4cpp is library of C++ classes for logging to files, syslog and other destinations.[Click here to download](http://sourceforge.net/projects/log4cpp/files/) for log4cpp libraries. Follow the steps given below to install Log4cpp
 
-        $ tar -xvf log4cpp-1.0.x.tar.gz
+        $ tar -xvf log4cpp-1.0.tar.gz
       
-        $ cd log4cpp-1.0.x
-        
+        $ cd log4cpp-1.0/
+                     
         $ ./configure
         
         $ make
@@ -96,7 +95,7 @@ Boost libraries are intended to be widely used, and usable across a broad spectr
  
  * Download the version of mongodb-linux-x86_64-2.0.2 from the link .[Click here to download](http://www.mongodb.org/downloads)
  
- * Extract the mongodb-linux-x86_64-2.0.2.tar.gz. tar file using the command and change it into the bin/directory 
+ * Extract the mongodb-linux-x86_64-2.0.2.tar.gz  tar file using the command and change it into the bin/directory 
 
         $ tar -xvf mongodb-linux-x86_64-2.0.2.tar.gz
 
@@ -112,24 +111,28 @@ Boost libraries are intended to be widely used, and usable across a broad spectr
          
 <h6>C++ DRIVER :</h6>
  
-* Download the C++ driver(mongodb-linux-x86_64-v2.0)from the link.[Click here to download](http://downloads.mongodb.org/cxx-driver/mongodb-linux-x86_64-v2.0-latest.tgz)
+* Download the C++ driver(mongodb-linux-x86_64-v1.8)from the link.[Click here to download](http://downloads.mongodb.org/cxx-driver/mongodb-linux-x86_64-v1.8-latest.tgz)
 
-* Extract the mongodb-linux-x86_64-2.0.2.tar.gz. tar file using the command  
+* Extract  mongodb-linux-x86_64-v1.8-latest.tgz file using the command  
 
-        $ tar -xvf mongodb-linux-x86_64-v2.0.tar.gz 
+        $ tar -xvf mongodb-linux-x86_64-v1.8-latest.tar.gz 
  
-* To compile the c++ driver, run the given below command in the top-level directory of the driver sources using the following command
-
-        $ cd mongo-cxx-driver-nightly/
+* Download **SCons** version scons-2.1.0-1.noarch.rpm from the folowing link.[Click here to download](http://sourceforge.net/projects/scons/files/scons/2.1.0/scons-2.1.0-1.noarch.rpm/download)
 	  
+        $ rpm -ivh scons-2.1.0-1.noarch.rpm
+        
+* Create the symbollic link to the boost libraries using the following command
+ 
+        $ ln -s /usr/local/boost_1_48_0/stage/lib/* /lib/*
+ 
+        $ ln -s /usr/local/boost_1_48_0/boost /usr/include
+
+* To compile the "standalone" C++ driver, run the scons command in the installation directory of the driver 
+
+        $ cd mongo-cxx-driver-v1.8
+                                
         $ scons
 
-* Run the following command to make sure, mongoDB libraries were built properly.
-
-        $ cd mongo/client
-        
-        $ g++ simple_client_demo.cpp -lmongoclient -lboost_thread-mt -lboost_filesystem -lboost_program_options
-        
 <h4>SYSLOG INSTALLATION:</h4>
 
 Syslog supported by a wide variety of devices and receivers across multiple platforms and can be used to integrate log data from many different types of systems into a central repository.
@@ -190,11 +193,10 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
           mongodb_database = graylog
           
           mongodb_port = 27017
-
    
 * Start the graylog2-server using given below commands
 
-        $ java -jar graylog2-server.jar -f ./graylog2.conf
+         $ java -jar graylog2-server.jar -f ./graylog2.conf
   
 <h6>Elastic Search </h6>
 
@@ -212,7 +214,7 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
 * Configure basic elasticsearch values in the existing config/elasticsearch.yml [elasticsearch configurations details](http://www.elasticsearch.org/guide/reference/setup/configuration.html)
 
-        network.host: <ipaddress>
+        network.host: <elasticsearchip:ipaddress>
         
         path.logs: /var/log/elasticsearch
         
@@ -240,29 +242,29 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
  
 <h6>Graylog2-Web Interface:</h6>
 
- * Download  version of graylog2-web interface 0.9.6 from the link.[Click here to download](https://github.com/Graylog2/graylog2-web-interface/downloads)
+* Download  version of graylog2-web interface 0.9.6 from the link.[Click here to download](https://github.com/Graylog2/graylog2-web-interface/downloads)
  
- * Extract the downloaded zip file using the following command abd change to the instaaltion directory
+* Extract the downloaded zip file using the following command abd change to the installation directory
 
         $ tar -xvf graylog2-webinterface-0.9.6.tar.gz.
 		
         $ cd graylog2-webinterface-0.9.6/
  
- * Update config/indexer.yml with
+* Update config/indexer.yml with
 
-       production
+        production
       
         url: http://0.0.0.0:0000/
          
         index_name: graylog2
 
- * Update config/mongoid.yml with
+* Update config/mongoid.yml with
 
-       production:
+        production:
          
-         host: <ipaddress>
+         host: <mongodb:ipaddress>
       
-         port: <portno>
+         port: <mongodb:portno>
        
          username: db_username
         
@@ -271,33 +273,67 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
          database: db_name
 
 
- * Install the latest version of ruby on rails which should be 1.9.2,follow the steps for installation by [clicking here]( http://torqueo.net/installing-ruby-192-and-rails-3) or using below steps shall make to install   
+* Install the latest version of ruby on rails which should be 1.9.2,follow the steps for installation by using below steps shall make to install successfully   
 
-         $ wget ftp://ftp.ruby-lang.org//pub/ruby/1.9/ruby-1.9.2-p0.tar.gz
+* Check for older version RUBY installed via RPM using the following command, 
+    
+         $ rpm -qa |grep "ruby"
 
-         $ tar -xvf ruby-1.9.2-p0.tar.gz
+* If older version exists, uninstall it before proceeding using the command
 
-         $ cd ruby-1.9.2-p0/
+        $ rpm -e package_name
+        
+        $ wget ftp://ftp.ruby-lang.org//pub/ruby/1.9/ruby-1.9.2-p0.tar.gz
 
-         $ ./configure --prefix=/usr/local/ruby
+        $ tar -xvf ruby-1.9.2-p0.tar.gz
+
+        $ cd ruby-1.9.2-p0/
+
+        $ ./configure --prefix=/usr/local/ruby
 	
-         $ make && sudo make install
+        $ make 
+        
+        $ make install
 
- * Export the PATH and GEM_HOME enviornment variables as given below.
+* Export the PATH and GEM_HOME enviornment variables as given below.
 
         $ export PATH=/usr/local/ruby/bin:$PATH
 
         $ export GEM_HOME=/usr/local/ruby
 
- * Now install the required gem packages, including Rails 3
+* Once the install is complete, verify the version of Ruby:
 
-        $ sudo gem install tzinfo builder memcache-client rack rack-test erubis mail text-format bundler thor i18n sqlite3-ruby
-	
-        $ sudo gem install rack-mount --version=0.4.0
+        $ ruby -v
+                   
+        ruby 1.9.2p0 (2010-08-18 revision 29036)
 
-        $ sudo gem install rails --version 3.0.0
+* Ruby source package also installs RubyGems, the Ruby package manager. Verify the version of RubyGems:
 
- * Start the web interface from the installation folder by using the command
+        $ gem -v
+          
+        1.3.7
+
+* Check for updated gems and ensure you have the latest gem versions by running this command:
+
+        $ gem update --system
+
+* Install the rake build language
+
+        $ gem install rake
+
+* Install rails
+
+        $ gem install rails
+       
+* List the installed gems.
+
+        $ gem list
+
+* To make successful installation of all files from gem package , use the command to install missing libraries
+
+        $ bundle install 
+
+* Start the web interface from the installation folder by using the command
 
         $ cd <WEB_INTERFACE_INSTALLTION_PATH>
 	
@@ -374,7 +410,7 @@ Example:
 
 **NOTE : The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format**
 
-**3.1.1** Multiple publishers need to publish the data on the topic use the following command with the options
+**3.1.1 Multiple publishers** need to publish the data on the topic use the following command with the options
 
        $ ./bp-pub.sh --
 
@@ -490,7 +526,7 @@ Example
 
 <h6>PULSE OXIMETER:</h6>
 
-**4.1. Pulse oximeter publisher** shall be started by passing the various options suffix to the command .
+**4.1. PulseoxMeter publisher** shall be started by passing the various options suffix to the command .
 
         $ ./pulseox-pub 
 
@@ -540,7 +576,7 @@ EXAMPLE:
 
 **NOTE :The arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format**
 
-**4.2.** Start the **pulse oximeter subscribers** on the other terminal using by passing various options suffix to the command,
+**4.2.** Start the **pulseox meter subscribers** on the other terminal using by passing various options suffix to the command,
 
        $ ./pulseox-sub-echo -
 
@@ -566,7 +602,7 @@ Example:
 
 **NOTE : The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.**
  
-**4.3.** Start the pulseox oximeter alarm on the other terminal using by passing various options suffix to the command
+**4.3.** Start the **pulseox meter alarm** on the other terminal using by passing various options suffix to the command
 
       $ ./pulseox-sub-alarm --
 
@@ -596,7 +632,7 @@ Example:
 
 **NOTE : The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.**
 
-**4.4.** Start the pulse oximeter persist on the other terminal using by passing various options suffix to the command 
+**4.4.** Start the **pulseox meter persists** on the other terminal using by passing various options suffix to the command
 
        $ ./pulseox-sub-persist -- 
 
@@ -628,7 +664,7 @@ Example:
 
 <h6>TEMPERATURE MONITOR:</h6>
 
-**5.1. Temperature monitor ** publisher shall be started by passing the various options suffix to the command.
+**5.1. Temperature monitor** publisher shall be started by passing the various options suffix to the command
 
        $ ./temperature-pub --
 
@@ -658,7 +694,7 @@ Example :
 
 **NOTE : The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.**
 
-**5.1.1. Multiple publishers** need to publish the data on the topic use the following command with the options
+**5.1.1. Multiple publishers** need to publish the data on the topic ,using the following command with the options
 
        $ ./temperature-pub.sh --
 
@@ -736,7 +772,7 @@ Example:
 
 **NOTE : The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.**
 
-**5.4.** Start the **temperature-monitor persistence** by passing the various options suffix to the command,
+**5.4.** Start the **temperature-monitor persists** by passing the various options suffix to the command,
 
        $ ./temperature-sub-persist 
 
@@ -762,7 +798,7 @@ Example:
 
        $ ./temperature-sub-persist --domain pulse --device-id TEMP_LAB3 --log-info temp.info --log-data temp.persist --log4cpp-conf ../src/c++/production/conf/simulation_log_temp_sub.conf
 
-  * Once the temperature monitor persistence is started it will update the data in to the database and displays the data in the log file.
+  * Once the temperature monitor persists is started it will update the data in to the database and displays the data in the log file.
 
 **NOTE : The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.**
 
@@ -820,7 +856,7 @@ Example:
 
        $ ./ecg-sub-echo --domain ECG --device-id ECG_LAB44 --log-info ecg.info --log-data ecg.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_ecg_sub.conf
   
-* Once the temp subscriber is started it will retrieve data from the ContentFilterTopic to retrieve messages based on the Device ID from a single topic.
+* Once the ecg subscriber is started it will retrieve data from the ContentFilterTopic to retrieve messages based on the Device ID from a single topic.
 
 **NOTE : The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.**
 
