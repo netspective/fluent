@@ -24,10 +24,8 @@ The requirements for compiling and running :
 
 * Websocketpp (WebSocket C++ Library)
 
-* Syslog Installation
-
+* Syslog Configuration
   
-
 <h4>INSTALLATION STEPS</h4>
 
 <h6>OPENSPLICEDDS</h6>
@@ -362,21 +360,21 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
  **Note:The configured database name,user name,password, ipaddress,port numbers of MongoDB in graylog2.conf,mongoid.yml should be as common.**
  
-**WEBSOCKET LIBRARY INSTALLATION**
+**WEBSOCKETPP LIBRARY**
 
 * Dowload the websocketpp library version **zaphoyd-websocketpp-e94825b.zip** from the following link.[Click here to download](http://www.zaphoyd.com/websocketpp)
 
 * Unzip the webscocket library using the following command 
 
-       $ unzip zaphoyd-websocketpp-e94825b.zip
+        $ unzip zaphoyd-websocketpp-e94825b.zip
 
 * Change to the installation directory and build static library using the following commands
 
-       $ cd zaphoyd-websocketpp-e94825b/
+        $ cd zaphoyd-websocketpp-e94825b/
        
-       $ make 
+        $ make 
        
-       $ make install
+        $ make install
     
 <h4>COMPILATION STEPS</h4>
 --------------------------
