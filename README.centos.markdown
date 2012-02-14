@@ -24,6 +24,10 @@ The requirements for compiling and running :
 
 * Websocketpp (WebSocket C++ Library)
 
+* Syslog Installation
+
+  
+
 <h4>INSTALLATION STEPS</h4>
 
 <h6>OPENSPLICEDDS</h6>
@@ -48,6 +52,12 @@ OpenSplice DDS is one of several open source implementation of the OMG Data Dist
 <h6>BOOST LIBRARY</h6>
 
 Boost libraries are intended to be widely used, and usable across a broad spectrum of applications. 
+
+* Check for existing boost library,if it's exists remove using the following command   
+
+        $ rpm -qa|grep boost
+  
+        $ rpm -e <package_name>
 
 * Download  Boost.1.48.0 version of boost library [Click here to download](http://www.boost.org/users/download/)
 
@@ -123,7 +133,7 @@ Boost libraries are intended to be widely used, and usable across a broad spectr
         
 * Create the symbollic link to the boost libraries using the following command
  
-        $ ln -s /usr/local/boost_1_48_0/stage/lib/* /lib/*
+        $ ln -s /usr/local/boost_1_48_0/stage/lib/* /lib
  
         $ ln -s /usr/local/boost_1_48_0/boost /usr/include
 
@@ -214,13 +224,20 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
 * Configure basic elasticsearch values in the existing config/elasticsearch.yml [elasticsearch configurations details](http://www.elasticsearch.org/guide/reference/setup/configuration.html)
 
-        network.host: <elasticsearchip:ipaddress>
+        network.host: <elasticsearch_ipaddress>
         
-        path.logs: /var/log/elasticsearch
+        path.logs : /var/log/elasticsearch
         
-        path.data: /var/data/elasticsearch
+        path.data : /var/data/elasticsearch
         
-        cluster.name: graylog2 
+        cluster.name : graylog2 
+        
+        http port : 9201
+        
+        http.enabled: true
+        
+        http.max_content_length: 100mb
+
         
 * Download elasticsearch-servicewrapper into your elasticserach/bin installation directory and unpack it there,using the following commands from the terminal 
 
@@ -275,8 +292,10 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
 * Install the latest version of ruby on rails which should be 1.9.2,follow the steps for installation by using below steps shall make to install successfully   
 
-* Check for older version RUBY installed via RPM using the following command, 
-    
+* Check for older version RUBY installed via RPM using the following command change to the previous directory, 
+
+         $ cd ../
+
          $ rpm -qa |grep "ruby"
 
 * If older version exists, uninstall it before proceeding using the command
@@ -328,18 +347,36 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 * List the installed gems.
 
         $ gem list
-
-* To make successful installation of all files from gem package , use the command to install missing libraries
-
-        $ bundle install 
-
-* Start the web interface from the installation folder by using the command
+        
+* Change to the web interface from the installation folder by using the command
 
         $ cd <WEB_INTERFACE_INSTALLTION_PATH>
 	
+* To make successful installation of all files from gem package, use the command to install missing libraries 
+
+        $ bundle install 
+
+* Start the web inrterface using the following command
+
         $ script/rails server -e production -p <PORTNO>
-	
+
  **Note:The configured database name,user name,password, ipaddress,port numbers of MongoDB in graylog2.conf,mongoid.yml should be as common.**
+ 
+**WEBSOCKET LIBRARY INSTALLATION**
+
+* Dowload the websocketpp library version **zaphoyd-websocketpp-e94825b.zip** from the following link.[Click here to download](http://www.zaphoyd.com/websocketpp)
+
+* Unzip the webscocket library using the following command 
+
+       $ unzip zaphoyd-websocketpp-e94825b.zip
+
+* Change to the installation directory and build static library using the following commands
+
+       $ cd zaphoyd-websocketpp-e94825b/
+       
+       $ make 
+       
+       $ make install
     
 <h4>COMPILATION STEPS</h4>
 --------------------------
