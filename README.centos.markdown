@@ -383,7 +383,7 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
         $ source /../../HDE/x86.linux2.6/release.com
 
-**NOTE : On CENTOS are supposed to replace the boost library names in MAKEFILE document ,as follows **
+*  On **CENTOS** are supposed to replace the boost library names in MAKEFILE document as follows 
 
         $ BOOST_LIBS= -lboost_thread -lboost_program_options -lboost_system
 
