@@ -31,6 +31,8 @@ The requirements for compiling and running :
 <h6>OPENSPLICEDDS</h6>
 ----------------------
 
+Note: Keep all the packages in /opt path and Troubleshooting steps available in bottom of this document
+
 OpenSplice DDS is one of several open source implementation of the OMG Data Distribution Service for Real-Time Systems (DDS) standard.
   
 * OpenJDK is pre-requisite for OpenSpliceDDS. Install latest version of OpenJDK (JDK 1.5 minimum required).
@@ -43,10 +45,20 @@ OpenSplice DDS is one of several open source implementation of the OMG Data Dist
 
 * Use the given commands to setup the environment and start DDS service
 
+* Replace "@@INSTALLDIR@@" with the installed opsl directory path
+
       	$ source release.com
       
       	$ ospl start
 
+<h6>DEVELOPMENT LIBRARIES</h6>
+
+* GCC is an integrated distribution of compilers for several major programming languages.
+
+        $ yum groupinstall "Development Tools"
+        
+        $ yum install zlib zlib-devel bzip2 bzip2-devel python python-devel libicu gcc44 gcc44-c++ pcre pcre-devel openssl openssl-devep
+              
 <h6>BOOST LIBRARY</h6>
 
 Boost libraries are intended to be widely used, and usable across a broad spectrum of applications. 
@@ -67,19 +79,12 @@ Boost libraries are intended to be widely used, and usable across a broad spectr
 
         $ ./bootstrap.sh
 	
-* Export the required environment variables with the appropriate path
+* Required create symbolic link with the appropriate path
 
-        $  export LD_LIBRARY_PATH=/usr/local/boost_1_48_0/stage/lib:
+        $  ln -s /opt/boost_1_48_0/stage/lib/* /lib
  
-        $  export CPLUS_INCLUDE_PATH=/usr/local/boost_1_48_0:
+        $  ln -s /opt/boost_1_48_0/boost /usr/include
 
-
-<h6>DEVELOPMENT LIBRARIES</h6>
-
-* GCC is an integrated distribution of compilers for several major programming languages.
-
-        $ yum groupinstall "Development Tools"
-              
 <h6>LOG FOR C++</h6>
 
 * Log4cpp is library of C++ classes for logging to files, syslog and other destinations.[Click here to download](http://sourceforge.net/projects/log4cpp/files/) for log4cpp libraries. Follow the steps given below to install Log4cpp
@@ -111,11 +116,21 @@ Boost libraries are intended to be widely used, and usable across a broad spectr
         
  * To check successful installation ,execute database server binary file using below given command
 
+        $ mkdir -p /data/db/
+        
+        $ chown `id -u` /data/db
+        
         $ ./monogd
 
  * To open a client database connection execute the binary file using below given command
 
         $ ./mongo
+        
+        $ > use <DATABASE_NAME>
+        
+        $ > db.addUser('<USERNAME>','<PASSWORD>');
+        
+        $ > db.auth('<USERNAME>','<PASSWORD>');
          
 <h6>C++ DRIVER :</h6>
  
@@ -129,12 +144,6 @@ Boost libraries are intended to be widely used, and usable across a broad spectr
 	  
         $ rpm -ivh scons-2.1.0-1.noarch.rpm
         
-* Create the symbollic link to the boost libraries using the following command
- 
-        $ ln -s /usr/local/boost_1_48_0/stage/lib/* /lib
- 
-        $ ln -s /usr/local/boost_1_48_0/boost /usr/include
-
 * To compile the "standalone" C++ driver, run the scons command in the installation directory of the driver 
 
         $ cd mongo-cxx-driver-v1.8
@@ -190,15 +199,15 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
         
           mongodb_useauth = true
 
-          mongodb_user = grayloguser
+          mongodb_user = <USERNAME>
 
-          mongodb_password = password
+          mongodb_password = <PASSWORD>
     
           mongodb_host = <ipaddress>
        
           #mongodb_replica_set = localhost:27017,localhost:27018,localhost:27019 [default]
         
-          mongodb_database = graylog
+          mongodb_database = <DATABASE_NAME>
           
           mongodb_port = 27017
    
@@ -230,7 +239,7 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
         
         cluster.name : graylog2 
         
-        http port : 9201
+        http port : <PORT>
         
         http.enabled: true
         
@@ -239,7 +248,7 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
         
 * Download elasticsearch-servicewrapper into your elasticserach/bin installation directory and unpack it there,using the following commands from the terminal 
 
-        $ wget https://github.com/elasticsearch/elasticsearch-servicewrapper/zipball/master
+        $ wget  --no-check-certificate https://github.com/elasticsearch/elasticsearch-servicewrapper/zipball/master
   
         $ mv master elasticsearch-servicewrapper.zip && unzip elasticsearch-servicewrapper.zip
 	
@@ -281,11 +290,11 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
       
          port: <mongodb:portno>
        
-         username: db_username
+         username: <USERNAME>
         
-         password: db_password
+         password: <PASSWORD>
         
-         database: db_name
+         database: <DATABASE_NAME>
 
 
 * Install the latest version of ruby on rails which should be 1.9.2,follow the steps for installation by using below steps shall make to install successfully   
@@ -314,9 +323,9 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
 * Export the PATH and GEM_HOME enviornment variables as given below.
 
-        $ export PATH=/usr/local/ruby/bin:$PATH
+        $ export export PATH=/usr/local/ruby/bin:/opt/ruby-1.9.2-p0/bin:$PATH
 
-        $ export GEM_HOME=/usr/local/ruby
+        $ export export GEM_HOME=/opt/ruby-1.9.2-p0
 
 * Once the install is complete, verify the version of Ruby:
 
@@ -352,6 +361,8 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 	
 * To make successful installation of all files from gem package, use the command to install missing libraries 
 
+        $ gem install bundler 
+        
         $ bundle install 
 
 * Start the web inrterface using the following command
@@ -383,29 +394,27 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
         $ source /../../HDE/x86.linux2.6/release.com
 
-*  On **CENTOS** are supposed to replace the boost library names in MAKEFILE document as follows 
+        
+* Run the following command to clean the build files.
 
-        $ BOOST_LIBS= -lboost_thread -lboost_program_options -lboost_system
+        $ make clean
 
 * Run the makefile
 
         $ cd support/build
-
+        
         $ make
 
 * After successful completion of compilation, binary files will be created in following directory.
 
         $ cd ../../bin/
 
-* Run the following command to clean the build files.
-
-        $ make clean
 
 <h4>STEPS TO RUN THE APPLICATIONS </h4>
 
 **1**. Set OpenSpliceDDS environment using the following command
 
-        $ source /usr/local/HDE/x86.linux2.6/release.com
+        $ source /opt/HDE/x86.linux2.6/release.com
 
 **2**. Start OpenSpliceDDS
 
@@ -413,7 +422,7 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
 **3**. Start the data generator at the terminal using the following command
 
-        $ ./data-generator 
+        $ ./data-generator <ipaddress> <port>
      
   * Data Generator will wait until it receives a request from publisher and once the request is received then it generates the data randomly corresponding to the publisher and send it to the publisher. The request can be from any of the three publishers listed below,
      
@@ -938,10 +947,42 @@ Example:
 
 **8.** The process of all the entities will remain the same as single machine implementation and the extension is it has been distributed with few configurations.
      
+<h6>TROUBLESHOOTING</h6>
 
+<h4>Log4cpp</h4>
 
+* Constructor error in the Basiclayout.cpp
 
+        $ add header file  include<memory> in src/BasicLayout.cpp.
 
+* Parsing error in the  Patternlayout.cpp 
+
+        $ replace the line 373 "component = new FormatModifierComponent(component, std::abs(minWidth), maxWidth, minWidth < 0);" with "component = new FormatModifierComponent(component, std::abs((float)minWidth), maxWidth, minWidth < 0);"
+              
+<h4>Graylog-Webinterface installation</h4>
+
+* `require': no such file to load -- zlib (LoadError)
+
+        $ cd /opt/ruby-1.9.2-p0/ext/zlib
+        
+        $ ruby extconf.rb
+        
+        $ make && make install 
+
+* `require': no such file to load -- openssl (LoadError)
+
+        $ cd /opt/ruby-1.9.2-p0/ext/openssl
+        
+        $ ruby extconf.rb --with--openssl=/usr/bin/openssl --with--openssl-lib=/usr/lib/openssl
+        
+        $ make && make install
+
+<h4>WebServer compilation in Netspective Fluent</h4>
+
+* error: ‘INT32_MIN’ or ‘INT32_MAX’ was not declared in this scope
+
+        $ Replace INT32_MIN with 0 and INT32_MAX with 2147483647 
+        
 
 
 
