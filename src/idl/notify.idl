@@ -1,0 +1,15 @@
+module com {
+	module netspective {
+		module medigy {
+			struct DeviceNotification {
+				string notification;
+				string srcDomain;
+				string srcDevice;
+				string fromHost;
+				long timeOfMeasurement;
+			};
+			#pragma keylist DeviceNotification
+
+		};
+	};
+};

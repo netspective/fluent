@@ -1,6 +1,5 @@
 #include <iostream>
 #include "SimpleDDS.h"
-#include <dds/dds.hpp>
 #include "ccpp_temperature.h"
 #include <arpa/inet.h>
 #include <netdb.h>

@@ -1,16 +1,11 @@
 #include "SimpleDDS.h"
 #include <iostream>
-#include <dds/dds.hpp>
 #include "ccpp_bp.h"
 
 // -- BOOST Include
 #include <boost/program_options.hpp>
 
-// -- DDS Include
-#include <dds/runtime.hpp>
-#include <dds/topic.hpp>
-#include <dds/reader.hpp>
-#include <dds/traits.hpp>
+
 #define devid "deviceID"
 
 /*Log4cpp Library*/

@@ -15,11 +15,9 @@
 #include "ccpp_pulseox.h"
 #include "ccpp_temperature.h"
 #include "ccpp_ecg.h"
-#include <dds/runtime.hpp>
-#include <dds/topic.hpp>
-#include <dds/reader.hpp>
-#include <dds/traits.hpp>
-#include <dds/dds.hpp>
+#include "ccpp_command.h"
+#include "ccpp_notify.h"
+
 #define SEMI ":"
 #define COMMA ","
 
@@ -41,8 +39,7 @@ void web_server_handler::on_open(session_ptr client)
 	std::cout << "client " << client << " joined " << std::endl;
 	m_connections.insert(std::pair<session_ptr,std::string>(client,get_con_id(client)));
 	send_to_all(serialize_state());
-	//client->send(encode_message("server","connected"));
-	//send_to_all(encode_message("server",m_connections[client]+" has joined the web."));
+	
 }
 
 void web_server_handler::on_close(session_ptr client) 
@@ -63,29 +60,68 @@ void web_server_handler::on_message(session_ptr client,const std::string &msg)
 	temp_client=client;
 	temp_msg=msg;
 
-	if(msg.find("dynamiclist")!=string::npos)
+	
+	if(msg.find("DLIST")!=string::npos)
+        {
+		client->send(encode_message("server",dlist));	
+		//send_to_all(encode_message("server",dlist));
+	}
+	if(nofy_flag!=1)
 	{
+		nofy_flag=1;
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-		pthread_create(&id, &attr,startTopicsThread, this);
+		pthread_create(&notifyid, &attr,startNotifyThread, this);
 
+		
+	}
+	if(liststart!=1)
+	{
+	if(msg.find("dynamiclist")!=string::npos)
+	{
+		cout<<"\n\nIN-Use-Topics Filter Started \n";
+		liststart=1;
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+		pthread_create(&listid, &attr,startTopicsThread, this);
+
+	}
 	}
 	if(msg.find("START")!=string::npos)
 	{
+		int start_flag=0;
+		for(int px=0;px<=pthread_count;px++)
+                {
+			if(currentdevice[px].find(msg)!=string::npos) 
+			{
+				start_flag=1;
+				cout<<"\n"<<msg<<"--Device is already running \n"; 
+				break;	
+			}
+
+                }
+		if(start_flag!=1)
+		{
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 		pthread_create(&pt_ary[pthread_count], &attr, startThread, this);
 		stringstream checkdev;
 		checkdev<<msg;
 		currentdevice[pthread_count]=checkdev.str();
+		/*for(int px=0;px<=pthread_count;px++)
+		{
+		cout<<"\n PTHREAD COUNT : "<<pthread_count <<"     PTHREAD ID : "<<pt_ary[px];
+		cout<<"         DEVICE NAME : " <<currentdevice[px];
+		}*/
 		//cout<<"\ncount :"<<pthread_count<<"\n";
 		pthread_count++;
+		}
 		
 		
 	}
 	else if(msg.find("STOP")!=string::npos)
 	{
-		size_t pos;
+		/*size_t pos;
 		string str2 = msg.substr (msg.rfind(":")); 
 		for(int checkn=0;checkn<pthread_count;checkn++)
 		{
@@ -97,7 +133,11 @@ void web_server_handler::on_message(session_ptr client,const std::string &msg)
 				cout<<"\n\Stopping Device  "<<currentdevice[checkn]<<"\n\n";
 			}
 			
-		}
+		}*/
+
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+		pthread_create(&stopid, &attr, stopPublisher, this);
 		
 	}
 	else
@@ -109,13 +149,102 @@ void web_server_handler::on_message(session_ptr client,const std::string &msg)
 
 
 }
+void *web_server_handler::startNotifyThread(void *arg)
+{
+			stringstream prtemp;
+			SimpleDDS *dev_nofy;
+			DeviceNotificationTypeSupport_var nofy_typesupport;
+			DataReader_ptr nofy_reader;
+			DeviceNotificationDataReader_var nofy_bpReader;
+			DeviceNotificationSeq bpList;
+			SampleInfoSeq infoSeq;
+			dev_nofy = new SimpleDDS();
+			nofy_typesupport = new DeviceNotificationTypeSupport();
+			ReturnCode_t status;
+			nofy_reader = dev_nofy->subscribe(nofy_typesupport);
+			nofy_bpReader = DeviceNotificationDataReader::_narrow(nofy_reader);
+
+			while (1)
+			{
+ 				status=nofy_bpReader->take(bpList,infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
+				if (status == RETCODE_NO_DATA) 
+				{
+          				continue;
+          			}
+  				for (int i = 0; i < bpList.length(); i++) 
+				{
+					if(infoSeq[i].valid_data)
+					{
+						prtemp<<bpList[i].notification<<"  "<<bpList[i].srcDevice<<":"<<bpList[i].srcDomain;
+						cout<<"\n\nNotificationTopic - " <<prtemp.str()<<"\n\n";
+						prtemp.str("");
+					}
+
+					nofy_bpReader->return_loan(bpList, infoSeq);
+				}
+				
+			}
+			prtemp.str("");
+
+}
+
+
+
+void *web_server_handler::stopPublisher(void *arg)
+{
+
+			web_server_handler test = *((web_server_handler*)arg);
+			session_ptr client=test.temp_client;
+			std::string &msg=test.temp_msg;			
+			char buf[1024];
+			
+			int spawn,flag,sizebuf,port;
+			stringstream prtemp,tmp_split;
+			tmp_split<<msg;
+			strcpy(buf,tmp_split.str().c_str());
+			SimpleDDS *simpledds;
+			CommandControllerTypeSupport_var typesupport;
+			DataWriter_ptr writer;
+			CommandControllerDataWriter_var bpWriter;
+			/*DDS::TopicQos tQos;
+			getQos(tQos);
+				tQos.durability.kind=TRANSIENT_DURABILITY_QOS;
+         			tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
+         			tQos.history.depth=10;
+         			tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
+         			tQos.durability_service.history_depth= 1024;
+
+			simpledds = new SimpleDDS(tQos);*/
+			simpledds = new SimpleDDS();
+			typesupport = new CommandControllerTypeSupport();
+			writer = simpledds->publish(typesupport);
+			bpWriter = CommandControllerDataWriter::_narrow(writer);
+					
+			CommandController data;
+			char * pch;
+			pch = strtok (buf,":");
+			data.command = DDS::string_dup(pch);		
+			pch = strtok (NULL, ":");
+			data.targetDomain= DDS::string_dup(pch);		
+			pch = strtok (NULL, ":");
+			data.targetDevice =DDS::string_dup(pch);
+			bpWriter->write(data, NULL);
+
+			//simpledds->deleteWriter(writer);
+			//delete simpledds;
+
+
+		
+}
+
 void *web_server_handler::startTopicsThread(void *arg)
 {
 	stringstream topictemp,devicestream;
 	web_server_handler test = *((web_server_handler*)arg);
 	session_ptr client=test.temp_client;
-
-	SimpleDDS *mgr = new SimpleDDS();
+	DDS::TopicQos tQos;
+	getQos(tQos);
+	SimpleDDS *mgr = new SimpleDDS(tQos);
 	Subscriber_var builtinSubscriber = mgr->participant->get_builtin_subscriber();
 	DataReader_var reader = builtinSubscriber->lookup_datareader("DCPSTopic");
 	TopicBuiltinTopicDataDataReader_var participantReader = TopicBuiltinTopicDataDataReader::_narrow(reader);
@@ -124,179 +253,176 @@ void *web_server_handler::startTopicsThread(void *arg)
 	SampleInfoSeq info;
 	while(1)
 	{
-	 test.name_topics="";
-	status=participantReader->take ( data, info, LENGTH_UNLIMITED,DDS::ANY_SAMPLE_STATE,DDS::ANY_VIEW_STATE,DDS::ANY_INSTANCE_STATE) ;
+	 	test.name_topics="";
+		//status=participantReader->take ( data, info, LENGTH_UNLIMITED,DDS::ANY_SAMPLE_STATE,DDS::ANY_VIEW_STATE,DDS::ANY_INSTANCE_STATE) ;
+		status=participantReader->read(data, info, LENGTH_UNLIMITED,DDS::ANY_SAMPLE_STATE,DDS::ANY_VIEW_STATE,DDS::ANY_INSTANCE_STATE);
 		if (status == RETCODE_NO_DATA) 
-				{
-          				continue;
-          			}
-        for (int i = 0; i < data.length(); i++)
-        {
-        	if(info[i].valid_data)
-                {
-                	if((data[i].name[0]!='D')&&(data[i].name[0]!='d'))
-                        {
-				
-				topictemp<<data[i].name;
-				test.name_topics=test.name_topics+";"+topictemp.str();
-				topictemp.str("");
-
-			if((test.name_topics.find("BloodPressure"))!=string::npos)
-			{
-		stringstream prtemp;
-		SimpleDDS *simpledds;
-		BloodPressureTypeSupport_var typesupport;
-    		DataReader_ptr reader;
-    		BloodPressureDataReader_var bpReader;
-    		ReturnCode_t status;
-		int i=0;
-		DDS::TopicQos tQos;
-		getQos(tQos);
-        	tQos.durability_service.history_depth= 1024;
-		simpledds = new SimpleDDS(tQos);
-		typesupport = new BloodPressureTypeSupport();
-    		reader = simpledds->subscribe(typesupport);
-    		bpReader = BloodPressureDataReader::_narrow(reader);
-   		BloodPressureSeq  bpList;
-     		SampleInfoSeq     infoSeq;
-		int loopexit=0;
-		while (loopexit!=5) 
 		{
-				
-        		 	status = bpReader->take(
-        		    	bpList,
-        		    	infoSeq,
-        		    	LENGTH_UNLIMITED,
-        		    	ANY_SAMPLE_STATE,
-        		   	ANY_VIEW_STATE,
-        		    	ANY_INSTANCE_STATE);
-        		 	//checkStatus(status, "take");
-        		  	loopexit++;
-          			for (i = 0; i < bpList.length(); i++) 
-	  			{
-					if(infoSeq[i].valid_data)
-					{
-
-						
-						prtemp<<bpList[i].deviceID;
-						if((test.name_topics.find(prtemp.str()))==string::npos)
-						{
-
-				test.name_topics=test.name_topics+","+prtemp.str();
-						}
-						
-						prtemp.str("");
-					}
-				}
-			status = bpReader->return_loan(bpList, infoSeq);
-	       		checkStatus(status, "return_loan");
-			sleep(1);
-			}
-       		
-		}
-	
-	
-	if((test.name_topics.find("PulseOximeter"))!=string::npos)
-	{
-		stringstream prtemp;
-		SimpleDDS *simpledds;
-		PulseOximeterTypeSupport_var typesupport;
-	    	DataReader_ptr reader;
-	    	PulseOximeterDataReader_var bpReader;
-	    	ReturnCode_t status;
-		int i=0;
-		DDS::TopicQos tQos;
-		getQos(tQos);
-	        tQos.durability_service.history_depth= 1024;
-		simpledds = new SimpleDDS(tQos);
-		typesupport = new PulseOximeterTypeSupport();
-	    	reader = simpledds->subscribe(typesupport);
-	    	bpReader = PulseOximeterDataReader::_narrow(reader);
-	   	PulseOximeterSeq  bpList;
-	     	SampleInfoSeq     infoSeq;
-
-		int loopexit=0;
-		while (loopexit!=5) 
-		{
-			status = bpReader->take(bpList,	infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
-         		//checkStatus(status, "take");
-          		loopexit++;
-          		for (i = 0; i < bpList.length(); i++) 
-	  		{
-				if(infoSeq[i].valid_data)
-					{
-						prtemp<<bpList[i].deviceID;
-						if((test.name_topics.find(prtemp.str()))==string::npos)
-						{
-
-				test.name_topics=test.name_topics+","+prtemp.str();
-						}
-						
-						prtemp.str("");
-						
-					}
+          		continue;
+          	}
+	        for (int i = 0; i < data.length(); i++)
+        	{
+        		if(info[i].valid_data)
+        	        {
+        	        	if((data[i].name[0]!='D')&&(data[i].name[0]!='d'))
+        	                {
 					
-			}
-			status = bpReader->return_loan(bpList, infoSeq);
-	       		checkStatus(status, "return_loan");
-	       		
-			sleep(1);
+					topictemp<<data[i].name;
+					test.name_topics=test.name_topics+";"+topictemp.str();
+					topictemp.str("");
+					 if((test.name_topics.find("BloodPressure"))!=string::npos)
+					{	
+						stringstream prtemp;
+						SimpleDDS *simpledds;
+						BloodPressureTypeSupport_var typesupport;
+    						DataReader_ptr reader;
+    						BloodPressureDataReader_var bpReader;
+    						ReturnCode_t status;
+						int i=0;
+						DDS::TopicQos tQos;
+						getQos(tQos);
+        					tQos.durability_service.history_depth= 1024;
+							simpledds = new SimpleDDS(tQos);
+						typesupport = new BloodPressureTypeSupport();
+    						reader = simpledds->subscribe(typesupport);
+    						bpReader = BloodPressureDataReader::_narrow(reader);
+   						BloodPressureSeq  bpList;
+     						SampleInfoSeq     infoSeq;
+						int loopexit=0;
+						while (loopexit!=100) 
+						{
+        						 	status = bpReader->take(
+        						    	bpList,
+        						    	infoSeq,
+        						    	LENGTH_UNLIMITED,
+        						    	ANY_SAMPLE_STATE,
+        						   	ANY_VIEW_STATE,
+        						    	ANY_INSTANCE_STATE);
+        						 	//checkStatus(status, "take");
+        						  	loopexit++;
+        				  			for (i = 0; i < bpList.length(); i++) 
+					  			{
+									if(infoSeq[i].valid_data)
+									{
+				
+										
+										prtemp<<bpList[i].deviceID;
+										if((test.name_topics.find(prtemp.str()))==string::npos)
+										{
+											test.name_topics=test.name_topics+","+prtemp.str();
+										}
+											
+										prtemp.str("");
+									}
+								}
+							status =bpReader->return_loan(bpList, infoSeq);
+		       					checkStatus(status, "return_loan");
+							usleep(99990);
+						}
+       				
+				}	
+		
+		
+				if((test.name_topics.find("PulseOximeter"))!=string::npos)
+				{	
+					stringstream prtemp;
+					SimpleDDS *simpledds;
+					PulseOximeterTypeSupport_var typesupport;
+		    			DataReader_ptr reader;
+		    			PulseOximeterDataReader_var bpReader;
+		    			ReturnCode_t status;
+					int i=0;
+					DDS::TopicQos tQos;
+					getQos(tQos);
+		        		tQos.durability_service.history_depth= 1024;
+					simpledds = new SimpleDDS(tQos);
+					typesupport = new PulseOximeterTypeSupport();
+		    			reader = simpledds->subscribe(typesupport);
+		    			bpReader = PulseOximeterDataReader::_narrow(reader);
+		   			PulseOximeterSeq  bpList;
+		     			SampleInfoSeq     infoSeq;
+	
+					int loopexit=0;
+					while (loopexit!=100) 
+					{
+				status = bpReader->take(bpList,	infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
+        	 				//checkStatus(status, "take");
+        	  				loopexit++;
+          				for (i = 0; i < bpList.length(); i++) 
+	  				{
+						if(infoSeq[i].valid_data)
+						{
+							prtemp<<bpList[i].deviceID;
+							if((test.name_topics.find(prtemp.str()))==string::npos)
+							{
+
+								test.name_topics=test.name_topics+","+prtemp.str();
+							}
+							
+							prtemp.str("");
+							
+						}
+									
+					}		
+					status = bpReader->return_loan(bpList, infoSeq);
+	       				checkStatus(status, "return_loan");
+	       				usleep(99990);
 			
-		}
-
-		}
-		if((test.name_topics.find("Temperature"))!=string::npos)
-		{
-			stringstream prtemp;
-			 SimpleDDS *simpledds;
-			 TemperatureTypeSupport_var typesupport;
-    	 		 DataReader_ptr reader;
-		    	 TemperatureDataReader_var bpReader;
-		    	 ReturnCode_t status;
-			 int i=0;
-			 DDS::TopicQos tQos;
-			 getQos(tQos);
-		         simpledds = new SimpleDDS(tQos);
-			 typesupport = new TemperatureTypeSupport();
-			 reader = simpledds->subscribe(typesupport);
-	    		bpReader = TemperatureDataReader::_narrow(reader);
-	   	   	 TemperatureSeq  bpList;
-		     	 SampleInfoSeq     infoSeq;
-			 int loopexit=0;
-			while (loopexit!=5) 
-			{
-		         	status = bpReader->take(
-            			bpList,
-            			infoSeq,
-            			LENGTH_UNLIMITED,
-		            	ANY_SAMPLE_STATE,
-           			ANY_VIEW_STATE,
-            			ANY_INSTANCE_STATE);
-         			//checkStatus(status, "take");
-		          	loopexit++;
-          			for (i = 0; i < bpList.length(); i++) 
-	  			{
-					if(infoSeq[i].valid_data)
-					{
-						prtemp<<bpList[i].deviceID;
-						if((test.name_topics.find(prtemp.str()))==string::npos)
-						{
-
-					test.name_topics=test.name_topics+","+prtemp.str();
-						}
-						
-						prtemp.str("");
-					}
-					
 				}
-				status = bpReader->return_loan(bpList, infoSeq);
-       				checkStatus(status, "return_loan");
-			sleep(1);
+
 			}
-		}
+			if((test.name_topics.find("Temperature"))!=string::npos)
+			{
+				stringstream prtemp;
+				 SimpleDDS *simpledds;
+				 TemperatureTypeSupport_var typesupport;
+    		 		 DataReader_ptr reader;
+			    	 TemperatureDataReader_var bpReader;
+			    	 ReturnCode_t status;
+				 int i=0;
+				 DDS::TopicQos tQos;
+				 getQos(tQos);
+			         simpledds = new SimpleDDS(tQos);
+				 typesupport = new TemperatureTypeSupport();
+				 reader = simpledds->subscribe(typesupport);
+		      		 bpReader = TemperatureDataReader::_narrow(reader);
+		   	   	 TemperatureSeq  bpList;
+			     	 SampleInfoSeq     infoSeq;
+				 int loopexit=0;
+				while (loopexit!=1000) 
+				{
+			         	status = bpReader->take(
+        	    			bpList,
+        	    			infoSeq,
+        	    			LENGTH_UNLIMITED,
+			            	ANY_SAMPLE_STATE,
+        	   			ANY_VIEW_STATE,
+        	    			ANY_INSTANCE_STATE);
+        	 			//checkStatus(status, "take");
+			          	loopexit++;
+        	  			for (i = 0; i < bpList.length(); i++) 
+		  			{
+						if(infoSeq[i].valid_data)
+						{
+							prtemp<<bpList[i].deviceID;
+							if((test.name_topics.find(prtemp.str()))==string::npos)
+							{
+			
+								test.name_topics=test.name_topics+","+prtemp.str();
+							}
+							
+						prtemp.str("");
+						}
+					
+					}
+					status = bpReader->return_loan(bpList, infoSeq);
+       					checkStatus(status, "return_loan");
+					usleep(999);
+				}
+			}
 		if((test.name_topics.find("ECG"))!=string::npos)
 		{
-			stringstream prtemp;
+			 stringstream prtemp;
 			 SimpleDDS *simpledds;
 	 		 ECGTypeSupport_var typesupport;
 		    	 DataReader_ptr reader;
@@ -306,13 +432,13 @@ void *web_server_handler::startTopicsThread(void *arg)
 	 	         simpledds = new SimpleDDS();
 			 typesupport = new ECGTypeSupport();
 			 reader = simpledds->subscribe(typesupport);
-	    		ecgReader = ECGDataReader::_narrow(reader);
-	   	   	ECGSeq  ecgList;
+	    		 ecgReader = ECGDataReader::_narrow(reader);
+	   	   	 ECGSeq  ecgList;
 		     	 SampleInfoSeq     infoSeq;
 			 int m_count=0;
-	 		  int loopexit=0;
-			while (loopexit!=10) 
-			{
+	 		 int loopexit=0;
+			 while (loopexit!=1000) 
+			 {
          			status = ecgReader->take(
          		   	ecgList,
          		   	infoSeq,
@@ -345,14 +471,20 @@ void *web_server_handler::startTopicsThread(void *arg)
        
     		}
 
-                }
+           			 }
                         
-                }
-        }
-	client->send(test.encode_message("server",test.name_topics));
-
+           		}
+        	}
+	//status = participantReader->return_loan(data, info);
+       	//checkStatus(status, "return_loan");
+	topictemp.str("");
+	topictemp<<test.name_topics;
+	dlist=topictemp.str();
+	topictemp.str("");
+	cout<<"\n\n LIST : "<<dlist<<"\n";
 	}
 }
+
 void *web_server_handler::startThread(void *arg)
 {
 	
@@ -369,7 +501,6 @@ void *web_server_handler::startThread(void *arg)
 	        strcpy(strDetails[idev++],pchsplit);
 		pchsplit = strtok (NULL, ":");
 	 }
-
 	 if (!strcmp(msg.c_str(),"bp"))
 	 {
 	 std::stringstream prtemp;
@@ -608,7 +739,7 @@ void *web_server_handler::startThread(void *arg)
 			char buf[1024], c;
 			int spawn,flag,sizebuf,port;
 			string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
-			stringstream prtemp;
+			stringstream prtemp,cmd_prtemp;
 			SimpleDDS *simpledds;
 			BloodPressureTypeSupport_var typesupport;
 			DataWriter_ptr writer;
@@ -657,38 +788,88 @@ void *web_server_handler::startThread(void *arg)
 			BloodPressure data;
 			data.deviceID = DDS::string_dup(strDetails[2]);
 			data.deviceDomain = DDS::string_dup("BP");
-			//data.deviceID = DDS::string_dup(deviceid.c_str());
-			//data.deviceDomain = DDS::string_dup(domainid.c_str());
-	
+			SimpleDDS *cmdsub;
+			CommandControllerTypeSupport_var cmd_typesupport;
+			DataReader_ptr cmd_reader;
+			CommandControllerDataReader_var cmd_bpReader;
+			cmdsub = new SimpleDDS();
+			cmd_typesupport = new CommandControllerTypeSupport();
+			cmd_reader = cmdsub->subscribe(cmd_typesupport);
+			cmd_bpReader = CommandControllerDataReader::_narrow(cmd_reader);
+			CommandControllerSeq  cmd_bpList;
+			SampleInfoSeq     cmd_infoSeq;
+
+			/*Nofication Topics Starts*/
+			SimpleDDS *dev_nofy;
+			DeviceNotificationTypeSupport_var nofy_typesupport;
+			DataWriter_ptr nofy_writer;
+			DeviceNotificationDataWriter_var nofy_bpWriter;
+			DeviceNotification nofy_data;
+			dev_nofy = new SimpleDDS();
+			nofy_typesupport = new DeviceNotificationTypeSupport();
+			nofy_writer = dev_nofy->publish(nofy_typesupport);
+			nofy_bpWriter = DeviceNotificationDataWriter::_narrow(nofy_writer);
+			nofy_data.notification = DDS::string_dup("Started Device");		
+			nofy_data.srcDomain= data.deviceDomain;		
+			nofy_data.srcDevice =data.deviceID;
+			nofy_bpWriter->write(nofy_data, NULL);
+			/*Notification Topic Ends*/
+			
+
 			while (1) 
 			{
+					/*Command Controller Starts*/
+					cmd_prtemp.str("");
+					cmd_bpReader->take(cmd_bpList,cmd_infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
+				        for (int ci = 0; ci < cmd_bpList.length(); ci++) 
+				  	{			
+						if(cmd_infoSeq[ci].valid_data)
+						{
+						cmd_prtemp <<cmd_bpList[ci].command<<","<<cmd_bpList[ci].targetDomain<<","<<cmd_bpList[ci].targetDevice;
+							cout<<"\n\nCommand Controller Data : "<<cmd_prtemp.str();
+							//cmd_prtemp.str("");
+						}
+						cmd_bpReader->return_loan(cmd_bpList, cmd_infoSeq);
+	  				}
 					
-				while ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
-				{
-				buf[sizebuf]='\0';
-				char * pch;
-				prtemp<<domainid<<","<<deviceid<<",";
-				pch = strtok (buf,":");
-				data.timeOfMeasurement = atol(pch);
-				prtemp<<data.timeOfMeasurement<<",";
-				pch = strtok (NULL, ":");
-				data.systolicPressure = (short)atoi(pch);		
-				prtemp<<data.systolicPressure<<",";
-				pch = strtok (NULL, ":");
-				data.diastolicPressure = (short)atoi(pch);
-				prtemp<<data.diastolicPressure<<",";
-				pch = strtok (NULL, ":");
-				data.pulseRatePerMinute = (short)atoi (pch);
-				prtemp<<data.pulseRatePerMinute;
-				bpWriter->write(data, NULL);
-				prtemp.str("");
-				}
+					if((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0)
+					{
+						buf[sizebuf]='\0';
+						char * pch;
+						prtemp<<data.deviceID;
+						if(cmd_prtemp.str().find(prtemp.str())!=string::npos)
+						{
+							nofy_data.notification = DDS::string_dup("Stopped Device");		
+							nofy_data.srcDomain= data.deviceDomain;		
+							nofy_data.srcDevice =data.deviceID;
+							nofy_bpWriter->write(nofy_data, NULL);
+							
+							break;
+						}
+						prtemp<<","<<data.deviceDomain<<",";
+						pch = strtok (buf,":");
+						data.timeOfMeasurement = atol(pch);
+						prtemp<<data.timeOfMeasurement<<",";
+						pch = strtok (NULL, ":");
+						data.systolicPressure = (short)atoi(pch);		
+						prtemp<<data.systolicPressure<<",";
+						pch = strtok (NULL, ":");
+						data.diastolicPressure = (short)atoi(pch);
+						prtemp<<data.diastolicPressure<<",";
+						pch = strtok (NULL, ":");
+						data.pulseRatePerMinute = (short)atoi (pch);
+						prtemp<<data.pulseRatePerMinute;
+						bpWriter->write(data, NULL);
+						//cout<<"\n"<<prtemp.str()<<"\n";
+						prtemp.str("");
+					}
+	
 		
 			}
 		
 	
-			simpledds->deleteWriter(writer);
-			delete simpledds;
+			//simpledds->deleteWriter(writer);
+			//delete simpledds;
 		}
 		if(!strcmp(strDetails[1],"PULSEOX"))
 		{
@@ -699,7 +880,7 @@ void *web_server_handler::startThread(void *arg)
 			char buf[1024], c;
 			int sizebuf,port;
 			string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
-			stringstream prtemp;
+			stringstream prtemp,cmd_prtemp;
 			SimpleDDS *simpledds;
 			PulseOximeterTypeSupport_var typesupport;
 			DataWriter_ptr writer;
@@ -747,13 +928,66 @@ void *web_server_handler::startThread(void *arg)
 		
 			data.deviceID = DDS::string_dup(strDetails[2]);
 			data.deviceDomain = DDS::string_dup(strDetails[1]);
+			SimpleDDS *cmdsub;
+			CommandControllerTypeSupport_var cmd_typesupport;
+			DataReader_ptr cmd_reader;
+			CommandControllerDataReader_var cmd_bpReader;
+			cmdsub = new SimpleDDS();
+			cmd_typesupport = new CommandControllerTypeSupport();
+			cmd_reader = cmdsub->subscribe(cmd_typesupport);
+			cmd_bpReader = CommandControllerDataReader::_narrow(cmd_reader);
+			CommandControllerSeq  cmd_bpList;
+			SampleInfoSeq     cmd_infoSeq;
+
+			/*Nofication Topics Starts*/
+			SimpleDDS *dev_nofy;
+			DeviceNotificationTypeSupport_var nofy_typesupport;
+			DataWriter_ptr nofy_writer;
+			DeviceNotificationDataWriter_var nofy_bpWriter;
+			DeviceNotification nofy_data;
+			dev_nofy = new SimpleDDS();
+			nofy_typesupport = new DeviceNotificationTypeSupport();
+			nofy_writer = dev_nofy->publish(nofy_typesupport);
+			nofy_bpWriter = DeviceNotificationDataWriter::_narrow(nofy_writer);
+			nofy_data.notification = DDS::string_dup("Started Device");		
+			nofy_data.srcDomain= data.deviceDomain;		
+			nofy_data.srcDevice =data.deviceID;
+			nofy_bpWriter->write(nofy_data, NULL);
+			/*Notification Topic Ends*/
+
 			while (1) 
 			{
-	
-				while ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
+				/*Command Controller Starts*/
+				cmd_prtemp.str("");
+				cmd_bpReader->take(cmd_bpList,cmd_infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
+			        for (int ci = 0; ci < cmd_bpList.length(); ci++) 
+			  	{			
+					if(cmd_infoSeq[ci].valid_data)
+					{
+						cmd_prtemp <<cmd_bpList[ci].command<<","<<cmd_bpList[ci].targetDomain<<","<<cmd_bpList[ci].targetDevice;
+						cout<<"\n\nCommand Controller Data : "<<cmd_prtemp.str();
+						}
+						cmd_bpReader->return_loan(cmd_bpList, cmd_infoSeq);
+	  				}
+				/*Command Controller Ends*/
+
+				if ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
 				{
 					buf[sizebuf]='\0';
 					char * pch;
+
+					prtemp<<data.deviceID;
+					if(cmd_prtemp.str().find(prtemp.str())!=string::npos)
+					{
+						nofy_data.notification = DDS::string_dup("Stopped Device");		
+						nofy_data.srcDomain= data.deviceDomain;		
+						nofy_data.srcDevice =data.deviceID;
+						nofy_bpWriter->write(nofy_data, NULL);
+						break;
+					}
+					prtemp<<","<<data.deviceDomain<<",";
+
+
 					pch = strtok (buf,":");
 					data.timeOfMeasurement = atol(pch);
 					prtemp<<data.timeOfMeasurement<<",";
@@ -770,8 +1004,8 @@ void *web_server_handler::startThread(void *arg)
 
 
 
-			simpledds->deleteWriter(writer);
-			delete simpledds;
+			//simpledds->deleteWriter(writer);
+			//delete simpledds;
 		}
 
 		if(!strcmp(strDetails[1],"TEMP"))
@@ -783,7 +1017,7 @@ void *web_server_handler::startThread(void *arg)
 			char buf[1024], c;
 			int sizebuf,port;
 			string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
-			stringstream prtemp;
+			stringstream prtemp,cmd_prtemp;
 		
 			SimpleDDS *simpledds;
 			TemperatureTypeSupport_var typesupport;
@@ -828,12 +1062,67 @@ void *web_server_handler::startThread(void *arg)
 			
 			data.deviceID = DDS::string_dup(strDetails[2]);
 			data.deviceDomain = DDS::string_dup(strDetails[1]);
+
+			SimpleDDS *cmdsub;
+			CommandControllerTypeSupport_var cmd_typesupport;
+			DataReader_ptr cmd_reader;
+			CommandControllerDataReader_var cmd_bpReader;
+			cmdsub = new SimpleDDS();
+			cmd_typesupport = new CommandControllerTypeSupport();
+			cmd_reader = cmdsub->subscribe(cmd_typesupport);
+			cmd_bpReader = CommandControllerDataReader::_narrow(cmd_reader);
+			CommandControllerSeq  cmd_bpList;
+			SampleInfoSeq     cmd_infoSeq;
+
+			/*Nofication Topics Starts*/
+			SimpleDDS *dev_nofy;
+			DeviceNotificationTypeSupport_var nofy_typesupport;
+			DataWriter_ptr nofy_writer;
+			DeviceNotificationDataWriter_var nofy_bpWriter;
+			DeviceNotification nofy_data;
+			dev_nofy = new SimpleDDS();
+			nofy_typesupport = new DeviceNotificationTypeSupport();
+			nofy_writer = dev_nofy->publish(nofy_typesupport);
+			nofy_bpWriter = DeviceNotificationDataWriter::_narrow(nofy_writer);
+			nofy_data.notification = DDS::string_dup("Started Device");		
+			nofy_data.srcDomain= data.deviceDomain;		
+			nofy_data.srcDevice =data.deviceID;
+			nofy_bpWriter->write(nofy_data, NULL);
+			/*Notification Topic Ends*/
+			
 			while (1) 
 			{
-				while ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
+				/*Command Controller Starts*/
+				cmd_prtemp.str("");
+				cmd_bpReader->take(cmd_bpList,cmd_infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
+			        for (int ci = 0; ci < cmd_bpList.length(); ci++) 
+			  	{			
+					if(cmd_infoSeq[ci].valid_data)
+					{
+						cmd_prtemp <<cmd_bpList[ci].command<<","<<cmd_bpList[ci].targetDomain<<","<<cmd_bpList[ci].targetDevice;
+						cout<<"\n\nCommand Controller Data : "<<cmd_prtemp.str();
+						}
+						cmd_bpReader->return_loan(cmd_bpList, cmd_infoSeq);
+	  				}
+				/*Command Controller Ends*/
+				
+				
+				if ((sizebuf=recv(socketDescriptor, buf, 50, 0)) > 0) 
 				{
 				buf[sizebuf] = '\0';
 				char * pch;
+
+				prtemp<<data.deviceID;
+				if(cmd_prtemp.str().find(prtemp.str())!=string::npos)
+				{
+					nofy_data.notification = DDS::string_dup("Stopped Device");		
+					nofy_data.srcDomain= data.deviceDomain;		
+					nofy_data.srcDevice =data.deviceID;
+					nofy_bpWriter->write(nofy_data, NULL);
+					break;
+				}
+				prtemp<<","<<data.deviceDomain<<",";
+
 				pch = strtok (buf,":");
 				data.timeOfMeasurement = atol(pch);
 				prtemp<<data.timeOfMeasurement<<",";
@@ -846,8 +1135,8 @@ void *web_server_handler::startThread(void *arg)
 			}
 	
 		
-			simpledds->deleteWriter(writer);
-			delete simpledds;
+			//simpledds->deleteWriter(writer);
+			//delete simpledds;
 		}
 
 		if(!strcmp(strDetails[1],"ECG"))
@@ -860,7 +1149,7 @@ void *web_server_handler::startThread(void *arg)
 			int spawn,flag,sizebuf,port,heartbeats,ecgsample,internalsample;
 			float amplitudenoise,heart_rate_mean,heart_rate_std,lowfreq,highfreq,lowfreqstd,highfreqstd,lfhfradio;
 			string domainid,deviceid,loginfo,logdata,logconfpath,hostip;
-			stringstream prtemp,datacommand;
+			stringstream prtemp,datacommand,cmd_prtemp;
 			heartbeats=256;                 
 			ecgsample=256;               
 			internalsample=256;
@@ -915,13 +1204,65 @@ void *web_server_handler::startThread(void *arg)
 			//data.deviceID = DDS::string_dup(strDetails[1]);
 			data.deviceID = DDS::string_dup("ECG_LAB44");
 			data.deviceDomain = DDS::string_dup(strDetails[2]);
+
+			SimpleDDS *cmdsub;
+			CommandControllerTypeSupport_var cmd_typesupport;
+			DataReader_ptr cmd_reader;
+			CommandControllerDataReader_var cmd_bpReader;
+			cmdsub = new SimpleDDS();
+			cmd_typesupport = new CommandControllerTypeSupport();
+			cmd_reader = cmdsub->subscribe(cmd_typesupport);
+			cmd_bpReader = CommandControllerDataReader::_narrow(cmd_reader);
+			CommandControllerSeq  cmd_bpList;
+			SampleInfoSeq     cmd_infoSeq;
 			long count=0;
+
+			/*Nofication Topics Starts*/
+			SimpleDDS *dev_nofy;
+			DeviceNotificationTypeSupport_var nofy_typesupport;
+			DataWriter_ptr nofy_writer;
+			DeviceNotificationDataWriter_var nofy_bpWriter;
+			DeviceNotification nofy_data;
+			dev_nofy = new SimpleDDS();
+			nofy_typesupport = new DeviceNotificationTypeSupport();
+			nofy_writer = dev_nofy->publish(nofy_typesupport);
+			nofy_bpWriter = DeviceNotificationDataWriter::_narrow(nofy_writer);
+			nofy_data.notification = DDS::string_dup("Started Device");		
+			nofy_data.srcDomain= data.deviceDomain;		
+			nofy_data.srcDevice =data.deviceID;
+			nofy_bpWriter->write(nofy_data, NULL);
+			/*Notification Topic Ends*/
+
 			while (1) 
 			{
+				
+				/*Command Controller Starts*/
+				cmd_prtemp.str("");
+				cmd_bpReader->take(cmd_bpList,cmd_infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
+			        for (int ci = 0; ci < cmd_bpList.length(); ci++) 
+			  	{			
+					if(cmd_infoSeq[ci].valid_data)
+					{
+						cmd_prtemp <<cmd_bpList[ci].command<<","<<cmd_bpList[ci].targetDomain<<","<<cmd_bpList[ci].targetDevice;
+						cout<<"\n\nCommand Controller Data : "<<cmd_prtemp.str();
+						}
+						cmd_bpReader->return_loan(cmd_bpList, cmd_infoSeq);
+	  				}
+				/*Command Controller Ends*/
 			
 				if ((sizebuf=recv(socketDescriptor, buf, 1024,  MSG_NOSIGNAL)) > 0) 
 				{
-					cout<<"\n"<<buf;
+					prtemp<<data.deviceID;
+					if(cmd_prtemp.str().find(prtemp.str())!=string::npos)
+					{
+						nofy_data.notification = DDS::string_dup("Stopped Device");		
+						nofy_data.srcDomain= data.deviceDomain;		
+						nofy_data.srcDevice =data.deviceID;
+						nofy_bpWriter->write(nofy_data, NULL);
+						break;
+					}
+					prtemp<<","<<data.deviceDomain<<",";
+
 					buf[sizebuf]='\0';
 					string datasplit[7];
 					datasplit[0] = strtok (buf,SEMI);
@@ -970,8 +1311,8 @@ void *web_server_handler::startThread(void *arg)
 				}
 
 
-			simpledds->deleteWriter(writer);
-			delete simpledds;
+			//simpledds->deleteWriter(writer);
+			//delete simpledds;
 		}
 		
 	}

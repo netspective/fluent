@@ -291,15 +291,14 @@ int create_server(char ipstring[20], char portstring[10])
 	return server;
 }
 
-int main() 
-{
+int main(int argc, char* argv[]) {
 	int server, client, ret;
 	struct sockaddr_in client_addr; 
 	socklen_t addrlen;
 	pthread_attr_t attr;
 	pthread_t id;
-	char ip_s[20]="127.0.0.1";
-	char port_s[10]="5000";
+	char *ip_s=argv[0];
+	char *port_s=argv[1];
 	server = create_server(ip_s,port_s);
 	while (1) 
 	{	

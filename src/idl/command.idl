@@ -1,0 +1,14 @@
+module com {
+	module netspective {
+		module medigy {
+			struct CommandController {
+				string command;
+				string targetDomain;
+				string targetDevice;
+				long timeOfMeasurement;
+			};
+			#pragma keylist CommandController
+
+		};
+	};
+};

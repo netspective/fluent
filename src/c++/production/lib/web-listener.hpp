@@ -2,8 +2,8 @@
 #define WEB_HPP
 
 #include <boost/shared_ptr.hpp>
-#include "/var/www/zaphoyd-websocketpp-e5b87e6/src/websocketpp.hpp"
-#include "/var/www/zaphoyd-websocketpp-e5b87e6/src/websocket_connection_handler.hpp"
+#include "/opt/zaphoyd-websocketpp-e5b87e6/src/websocketpp.hpp"
+#include "/opt/zaphoyd-websocketpp-e5b87e6/src/websocket_connection_handler.hpp"
 
 #include <map>
 #include <string>
@@ -12,13 +12,20 @@
 
 namespace websocketweb {
 
+
+static std::string dlist;
+static int nofy_flag;
 class web_server_handler : public websocketpp::connection_handler {
 public:
 	pthread_attr_t attr;
         pthread_t id;
+	pthread_t stopid;
+	pthread_t listid;
+		pthread_t notifyid;
 	//std::string name_topics[100];
 	std::string name_topics;
-	//int topic_count;
+
+	int liststart;
 	websocketpp::session_ptr temp_client;
 	std::string temp_msg;
 	pthread_t pt_ary[100];
@@ -49,7 +56,9 @@ private:
 	std::string get_con_id(websocketpp::session_ptr s);
 	
 	void send_to_all(std::string data);
+	static void *startNotifyThread(void *arg);
 	static void *startTopicsThread(void *arg);
+	static void *stopPublisher(void *arg);
 	static void *startThread(void *arg);
 	// list of outstanding connections
 	std::map<websocketpp::session_ptr,std::string> m_connections;

@@ -44,6 +44,9 @@ bool parse_args_temp_alarm(int argc,char* argv[],string &domainid,string &device
 
 bool parse_args_sub_persist(int argc, char* argv[],string &domainid,string &deviceid,string &loginfo,string &logdata,string &logconfpath, string &host, string &database);
 
+bool parse_args_pub_ecg(int argc, char* argv[],string &hostip,int &port,string &domainid,string &deviceid,string &loginfo,string &logdata,string &logconfpath,int &heartbeats,int &ecgsample,int &internalsample, float &amplitudenoise, float &heart_rate_mean,float &heart_rate_std,float &lowfreq,float &highfreq,float &lowfreqstd,float &highfreqstd,float &lfhfradio);
+
+
 
 string alarmString(int value,int min,int max);
 #endif

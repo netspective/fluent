@@ -11,26 +11,27 @@ JAVA_DIR=$(TOPDIR)/src/java/production
 CPP_LIB_DIR=$(TOPDIR)/src/c++/production/lib
 
 # The C/C++ compilers to use
-CPP=/usr/bin/g++ 
+#CPP=/usr/bin/g++ 
+CPP=/usr/bin/g++44
 iCC=/usr/bin/gcc
 IDLPP= idlpp
 
 # The C/C++ compiler flags
-CPPFLAGS= -g -Wall -I$(OSPL_HOME)/include/dcps/C++/SACPP -I$(OSPL_HOME)/include -I$(OSPL_HOME)/include/sys -I$(CPP_LIB_DIR)
-LDFLAGS= -L$(OSPL_HOME)/lib -L/usr/lib -Wl,-rpath,$(OSPL_HOME)/lib
+CPPFLAGS= -g -Wall -I/opt/mongo-cxx-driver-v1.8/mongo/client -I$(OSPL_HOME)/include/dcps/C++/SACPP -I$(OSPL_HOME)/include -I$(OSPL_HOME)/include/sys -I$(CPP_LIB_DIR)
+LDFLAGS= -L/opt/mongo-cxx-driver-v1.8 -L/lib64 -L$(OSPL_HOME)/lib -L/usr/lib -Wl,-rpath,$(OSPL_HOME)/lib
 LIBS= -ldcpsgapi -ldcpssacpp -lddsdatabase -lddsos  -lpthread
 
 
 # Boost Libraries is used by the  publisher/generator examples
 BOOST_INCFLAGS= 
-BOOST_LIBS= -lboost_thread-mt -lboost_program_options-mt -lboost_system-mt
+BOOST_LIBS= -lboost_thread -lboost_program_options -lboost_system
 
-WEBCPPFLAGS= -g -Wall -I/var/www/zaphoyd-websocketpp-e5b87e6/src -I/home/vicareplus/boost_1_48_0 -I$(OSPL_HOME)/include/dcps/C++/SACPP -I$(OSPL_HOME)/include -I$(OSPL_HOME)/include/sys -I$(CPP_LIB_DIR)
-WEBLDFLAGS= -L$(OSPL_HOME)/lib -L/home/vicareplus/boost_1_48_0/stage/lib -L/usr/lib -Wl,-rpath,$(OSPL_HOME)/lib
+WEBCPPFLAGS= -g -Wall -I/opt/zaphoyd-websocketpp-e5b87e6/src -I/opt/boost_1_48_0 -I$(OSPL_HOME)/include/dcps/C++/SACPP -I$(OSPL_HOME)/include -I$(OSPL_HOME)/include/sys -I$(CPP_LIB_DIR)
+WEBLDFLAGS= -L/lib64 -L$(OSPL_HOME)/lib -L/opt/boost_1_48_0/stage/lib -L/usr/lib -Wl,-rpath,$(OSPL_HOME)/lib
 WEBLIBS= -ldcpsgapi -ldcpssacpp -lddsdatabase -lddsos  -lpthread
 
 # Boost Libraries is used by the  publisher/generator examples
-WEBBOOST_LIBS= -lboost_thread-mt -lboost_program_options-mt -lboost_system-mt
+WEBBOOST_LIBS= -lboost_thread -lboost_program_options -lboost_system
 
 
 # The target programs to build
@@ -92,6 +93,36 @@ $(CPP_DIR)/lib/gen/bp/libbp.a: $(CPP_DIR)/lib/gen/bp/bp.h
         $(CPP) $(CPPFLAGS) -c bpSplDcps.cpp; \
         ar cr libbp.a bp.o bpDcps.o bpDcps_impl.o bpSplDcps.o; \
         ranlib libbp.a
+
+# Generate the command C++ source files from the IDL
+$(CPP_DIR)/lib/gen/command/command.h:
+	mkdir -p $(CPP_DIR)/lib/gen/command; \
+        cd $(IDL_DIR); $(IDLPP) -S -l cpp -d $(CPP_DIR)/lib/gen/command command.idl; 
+
+# Compile the command IDL-generated C++ files into libcommand.a
+$(CPP_DIR)/lib/gen/command/libcommand.a: $(CPP_DIR)/lib/gen/command/command.h
+	 cd $(CPP_DIR)/lib/gen/command; \
+        $(CPP) $(CPPFLAGS) -c command.cpp; \
+        $(CPP) $(CPPFLAGS) -c commandDcps.cpp; \
+        $(CPP) $(CPPFLAGS) -c commandDcps_impl.cpp; \
+        $(CPP) $(CPPFLAGS) -c commandSplDcps.cpp; \
+        ar cr libcommand.a command.o commandDcps.o commandDcps_impl.o commandSplDcps.o; \
+        ranlib libcommand.a
+
+# Generate the notify C++ source files from the IDL
+$(CPP_DIR)/lib/gen/notify/notify.h:
+	mkdir -p $(CPP_DIR)/lib/gen/notify; \
+        cd $(IDL_DIR); $(IDLPP) -S -l cpp -d $(CPP_DIR)/lib/gen/notify notify.idl; 
+
+# Compile the notify IDL-generated C++ files into libnotify.a
+$(CPP_DIR)/lib/gen/notify/libnotify.a: $(CPP_DIR)/lib/gen/notify/notify.h
+	cd $(CPP_DIR)/lib/gen/notify; \
+        $(CPP) $(CPPFLAGS) -c notify.cpp; \
+        $(CPP) $(CPPFLAGS) -c notifyDcps.cpp; \
+        $(CPP) $(CPPFLAGS) -c notifyDcps_impl.cpp; \
+        $(CPP) $(CPPFLAGS) -c notifySplDcps.cpp; \
+        ar cr libnotify.a notify.o notifyDcps.o notifyDcps_impl.o notifySplDcps.o; \
+        ranlib libnotify.a
 
 # Compile the SimpleDDS helper class
 SimpleDDS.o: $(CPP_LIB_DIR)/SimpleDDS.cpp
@@ -263,9 +294,9 @@ $(CPP_DIR)/app/data-generator: $(CPP_DIR)/lib/gen/bp/libbp.a
             $(LIBS) $(BOOST_LIBS);
 
 # Compile the bloodPressureSubscribe web-based binary
-$(CPP_DIR)/app/webserver: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(CPP_LIB_DIR)/Functions.o /var/www/zaphoyd-websocketpp-e5b87e6/libwebsocketpp.a $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(CPP_DIR)/lib/gen/temperature/libtemperature.a $(CPP_DIR)/lib/gen/ecg/libecg.a  
+$(CPP_DIR)/app/webserver: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(CPP_LIB_DIR)/Functions.o /opt/zaphoyd-websocketpp-e5b87e6/libwebsocketpp.a $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(CPP_DIR)/lib/gen/temperature/libtemperature.a $(CPP_DIR)/lib/gen/ecg/libecg.a $(CPP_DIR)/lib/gen/command/libcommand.a $(CPP_DIR)/lib/gen/notify/libnotify.a 
 	cd $(CPP_DIR)/app; \
-	g++ -I/var/www/zaphoyd-websocketpp-e5b87e6/src -I/home/vicareplus/boost_1_48_0  -L/home/vicareplus/boost_1_48_0/stage/lib -c -O2 -o $(CPP_DIR)/app/webServer.o $(CPP_DIR)/app/webServer.cpp $(WEBCPPFLAGS) $(WEBBOOST_LIBS) $(WEBLIBS); \
-	g++  -I$(CPP_DIR)/lib/gen/EbD_Sensor $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/bp -I$(CPP_DIR)/lib/gen/pulseox -I$(CPP_DIR)/lib/gen/temperature -I$(CPP_DIR)/lib/gen/ecg -c -O2 -o $(CPP_DIR)/app/web-listener.o $(CPP_DIR)/app/web-listener.cpp $(WEBCPPFLAGS) $(WEBLIBS) ; \
-	g++ -O2  $(WEBLDFLAGS) $(CPP_DIR)/app/webServer.o $(CPP_LIB_DIR)/SimpleDDS.o  $(CPP_DIR)/app/web-listener.o -o $(TOPDIR)/bin/webserver  -L/home/vicareplus/boost_1_48_0/stage/lib/ -lboost_system -lboost_date_time -lboost_regex -lboost_random  -lboost_program_options $(CPP_DIR)/lib/gen/bp/libbp.a /var/www/zaphoyd-websocketpp-e5b87e6/libwebsocketpp.a   $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(CPP_DIR)/lib/gen/temperature/libtemperature.a $(CPP_DIR)/lib/gen/ecg/libecg.a $(WEBCPPFLAGS) $(WEBLIBS);
+	g++ -I/opt/zaphoyd-websocketpp-e5b87e6/src -I/opt/boost_1_48_0  -L/opt/boost_1_48_0/stage/lib -c -O2 -o $(CPP_DIR)/app/webServer.o $(CPP_DIR)/app/webServer.cpp $(WEBCPPFLAGS) $(WEBBOOST_LIBS) $(WEBLIBS); \
+	g++  -I$(CPP_DIR)/lib/gen/command/ -I$(CPP_DIR)/lib/gen/notify/ -I$(CPP_DIR)/lib/gen/EbD_Sensor $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/bp -I$(CPP_DIR)/lib/gen/pulseox -I$(CPP_DIR)/lib/gen/temperature -I$(CPP_DIR)/lib/gen/ecg -c -O2 -o $(CPP_DIR)/app/web-listener.o $(CPP_DIR)/app/web-listener.cpp $(WEBCPPFLAGS) $(WEBLIBS) ; \
+	g++ -O2  $(WEBLDFLAGS) $(CPP_DIR)/app/webServer.o $(CPP_LIB_DIR)/SimpleDDS.o  $(CPP_DIR)/app/web-listener.o -o $(TOPDIR)/bin/webserver  -L/opt/boost_1_48_0/stage/lib/ -lboost_system -lboost_date_time -lboost_regex -lboost_random  -lboost_program_options $(CPP_DIR)/lib/gen/bp/libbp.a /opt/zaphoyd-websocketpp-e5b87e6/libwebsocketpp.a   $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(CPP_DIR)/lib/gen/temperature/libtemperature.a $(CPP_DIR)/lib/gen/ecg/libecg.a $(CPP_DIR)/lib/gen/command/libcommand.a $(CPP_DIR)/lib/gen/notify/libnotify.a $(WEBCPPFLAGS) $(WEBLIBS);
 

@@ -1,14 +1,8 @@
 #include <iostream>
 #include "SimpleDDS.h"
-#include <dds/dds.hpp>
 #include "ccpp_temperature.h""
 // -- BOOST Include
 #include <boost/program_options.hpp>
-// -- DDS Include
-#include <dds/runtime.hpp>
-#include <dds/topic.hpp>
-#include <dds/reader.hpp>
-#include <dds/traits.hpp>
 #include "Functions.h"
 #include <log4cpp/Category.hh>
 #include <log4cpp/FileAppender.hh>

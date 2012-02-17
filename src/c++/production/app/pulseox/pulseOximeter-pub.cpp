@@ -1,7 +1,6 @@
 			//PULSEOX -PUB//
 #include <iostream>
 #include "SimpleDDS.h"
-#include <dds/dds.hpp>
 #include "ccpp_pulseox.h"
 #include <arpa/inet.h>
 #include <netdb.h>

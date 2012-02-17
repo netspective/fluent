@@ -1,6 +1,5 @@
 #include "SimpleDDS.h"
 #include <iostream>
-#include <dds/dds.hpp>
 #include "ccpp_bp.h"
 #include <arpa/inet.h>
 #include <netdb.h>
