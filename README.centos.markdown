@@ -57,7 +57,7 @@ OpenSplice DDS is one of several open source implementation of the OMG Data Dist
 
         $ yum groupinstall "Development Tools"
         
-        $ yum install zlib zlib-devel bzip2 bzip2-devel python python-devel libicu gcc44 gcc44-c++ pcre pcre-devel openssl openssl-devep
+        $ yum install zlib zlib-devel bzip2 bzip2-devel python python-devel libicu gcc44 gcc44-c++ pcre pcre-devel openssl openssl-devep httpd
               
 <h6>BOOST LIBRARY</h6>
 
@@ -408,6 +408,28 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 * After successful completion of compilation, binary files will be created in following directory.
 
         $ cd ../../bin/
+
+
+<h4>Apache Configuration </h4>
+
+        $ vim /etc/httpd/conf/httpd.conf
+        
+	* append the following configuration 
+ 
+	Listen 80
+	<VirtualHost *:80>
+	DocumentRoot "/opt/netspective-fluent/src/web"
+	<Directory "/opt/netspective-fluent/src/web">
+	DirectoryIndex index.html index.htm index.php
+	Options Indexes FollowSymLinks
+	AllowOverride None
+	Order allow,deny
+	Allow from all
+	Options +ExecCGI
+	AddHandler cgi-script cgi pl
+	</Directory>
+	</VirtualHost>
+
 
 
 <h4>STEPS TO RUN THE APPLICATIONS </h4>
