@@ -362,7 +362,7 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
  
 **WEBSOCKETPP LIBRARY**
 
-* Dowload the websocketpp library version **zaphoyd-websocketpp-e94825b.zip** from the following link.[Click here to download](http://www.zaphoyd.com/websocketpp)
+* Dowload the websocketpp library version **zaphoyd-websocketpp-e94825b.zip** from the following link.[Click here to download](https://github.com/zaphoyd/websocketpp)
 
 * Unzip the webscocket library using the following command 
 
