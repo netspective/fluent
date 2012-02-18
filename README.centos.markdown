@@ -412,25 +412,27 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
 <h4>Apache Configuration </h4>
 
-        $ vim /etc/httpd/conf/httpd.conf
-        
-	* append the following configuration 
+* Append the following configuration in /etc/httpd/conf/httpd.conf 
  
-	Listen 80
-	<VirtualHost *:80>
-	DocumentRoot "/opt/netspective-fluent/src/web"
-	<Directory "/opt/netspective-fluent/src/web">
-	DirectoryIndex index.html index.htm index.php
-	Options Indexes FollowSymLinks
-	AllowOverride None
-	Order allow,deny
-	Allow from all
-	Options +ExecCGI
-	AddHandler cgi-script cgi pl
-	</Directory>
-	</VirtualHost>
+        
 
+        Listen 80
+        <VirtualHost *:80>
+        	DocumentRoot "/opt/netspective-fluent/src/web"
+        	<Directory "/opt/netspective-fluent/src/web">
+        		DirectoryIndex index.html index.htm index.php
+        		Options Indexes FollowSymLinks
+        		AllowOverride None
+        		Order allow,deny
+        		Allow from all
+        		Options +ExecCGI
+        		AddHandler cgi-script cgi pl
+        	</Directory>
+        </VirtualHost>
 
+* Start Apache webserer
+
+        $ /etc/init.d/httpd start
 
 <h4>STEPS TO RUN THE APPLICATIONS </h4>
 
