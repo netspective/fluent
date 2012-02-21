@@ -324,9 +324,9 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
 * Export the PATH and GEM_HOME enviornment variables as given below.
 
-        $ export export PATH=/usr/local/ruby/bin:/opt/ruby-1.9.2-p0/bin:$PATH
+        $ export PATH=/usr/local/ruby/bin:/opt/ruby-1.9.2-p0/bin:$PATH
 
-        $ export export GEM_HOME=/opt/ruby-1.9.2-p0
+        $ export GEM_HOME=/opt/ruby-1.9.2-p0
 
 * Once the install is complete, verify the version of Ruby:
 
@@ -395,14 +395,19 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
         $ source /../../HDE/x86.linux2.6/release.com
 
-        
+* Download the netspective-fluent from the Netspective github
+
+* Run the following command to clean the build files.
+
+        $ cd <netspective-fluent>/support/build
+
+* Edit the Makefile and replace <topdir-netspective-fluent> to netspective-fluent with parent directories
+
 * Run the following command to clean the build files.
 
         $ make clean
 
 * Run the makefile
-
-        $ cd support/build
         
         $ make
 
