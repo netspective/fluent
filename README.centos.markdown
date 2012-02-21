@@ -401,7 +401,7 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
         $ cd <netspective-fluent>/support/build
 
-* Edit the Makefile and replace <topdir-netspective-fluent> to netspective-fluent with parent directories
+* Edit the Makefile and replace @@topdir-netspective-fluent@@ to netspective-fluent with parent directories
 
 * Run the following command to clean the build files.
 

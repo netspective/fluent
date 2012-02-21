@@ -1,7 +1,7 @@
 # Makefile 
 
 # The top level directory
-TOPDIR=<topdir-netspective-fluent>
+TOPDIR=@@topdir-netspective-fluent@@
 
 # The source directory locations
 IDL_DIR=$(TOPDIR)/src/idl
