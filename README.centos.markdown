@@ -162,59 +162,12 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
 * Once the installation got completed update the configurations in the file /etc/syslog.conf with the **server ip address:port.**
 
-         @@ 0.0.0.0:514
+         *.* <graylog-server-ip>:514
  
 * Command used to restart the syslog are given below
 
         $ /etc/init.d/syslog restart
                          
-<h4>GRAYLOG2 INSTALLATION:</h4>
-------------------------------
-
-</h6>Graylog2 Server:</h6>
-
-* Download the version of graylog2 server0.9.6 from the following link.[Click here to download](https://github.com/Graylog2/graylog2-server/downloads)
- 
-* Extract the graylog2 server tar file using the command and change to the installation directory
-
-        $ tar -xvf graylog2-server-0.9.6.tar.gz
-      
-        $ cd graylog2-server-0.9.6/
-    
-* Create a copy graylog2.conf using the example configuration file.The paremeters to be updated are listed below 
-
-        $ cp graylog2.conf.example graylog2.conf
-
-          Parameters:
-          
-          syslog_listen_port = 514 [default]
-        
-          syslog_protocol = udp [default]
-
-          #MongoDB & ElasticSearch configuration 
-
-          elasticsearch_url = http://<ipaddress>:portno/
-        
-          elasticsearch_index_name = graylog2
-        
-          mongodb_useauth = true
-
-          mongodb_user = <USERNAME>
-
-          mongodb_password = <PASSWORD>
-    
-          mongodb_host = <ipaddress>
-       
-          #mongodb_replica_set = localhost:27017,localhost:27018,localhost:27019 [default]
-        
-          mongodb_database = <DATABASE_NAME>
-          
-          mongodb_port = 27017
-   
-* Start the graylog2-server using given below commands
-
-         $ java -jar graylog2-server.jar -f ./graylog2.conf
-  
 <h6>Elastic Search </h6>
 
 * Download elasticsearch 0.18.6 version from the link [Click here to download](http://www.elasticsearch.org/download/) and unpack it, 
@@ -262,6 +215,54 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
 * Elasticsearch instance started successfully the we can check it in the log files either in the same directory or default in **/var/log/elasticsearch/graylog2.log**
  
+
+<h4>GRAYLOG2 INSTALLATION:</h4>
+------------------------------
+
+</h6>Graylog2 Server:</h6>
+
+* Download the version of graylog2 server0.9.6 from the following link.[Click here to download](https://github.com/Graylog2/graylog2-server/downloads)
+ 
+* Extract the graylog2 server tar file using the command and change to the installation directory
+
+        $ tar -xvf graylog2-server-0.9.6.tar.gz
+      
+        $ cd graylog2-server-0.9.6/
+    
+* Create a copy graylog2.conf using the example configuration file.The paremeters to be updated are listed below 
+
+        $ cp graylog2.conf.example graylog2.conf
+
+          Parameters:
+          
+          syslog_listen_port = 514 [default]
+        
+          syslog_protocol = udp [default]
+
+          #MongoDB & ElasticSearch configuration 
+
+          elasticsearch_url = http://<ipaddress>:portno/
+        
+          elasticsearch_index_name = graylog2
+        
+          mongodb_useauth = true
+
+          mongodb_user = <USERNAME>
+
+          mongodb_password = <PASSWORD>
+    
+          mongodb_host = <ipaddress>
+       
+          #mongodb_replica_set = localhost:27017,localhost:27018,localhost:27019 [default]
+        
+          mongodb_database = <DATABASE_NAME>
+          
+          mongodb_port = 27017
+   
+* Start the graylog2-server using given below commands
+
+         $ java -jar graylog2-server.jar -f ./graylog2.conf
+  
 **Note:The configurations in elasticsearch.yml,graylog2.conf should be as common.**
  
 <h6>Graylog2-Web Interface:</h6>
@@ -278,7 +279,7 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
         production
       
-        url: http://0.0.0.0:0000/
+        url: http://<elasticsearch-ip>:<port>/
          
         index_name: graylog2
 
