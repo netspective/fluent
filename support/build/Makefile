@@ -1,7 +1,7 @@
 # Makefile 
 
 # The top level directory
-TOPDIR=$(PWD)/../..
+TOPDIR=<topdir-netspective-fluent>
 
 # The source directory locations
 IDL_DIR=$(TOPDIR)/src/idl
@@ -12,7 +12,7 @@ CPP_LIB_DIR=$(TOPDIR)/src/c++/production/lib
 
 # The C/C++ compilers to use
 #CPP=/usr/bin/g++ 
-CPP=/usr/bin/g++44
+CPP=/usr/bin/g++
 iCC=/usr/bin/gcc
 IDLPP= idlpp
 
@@ -294,7 +294,7 @@ $(CPP_DIR)/app/data-generator: $(CPP_DIR)/lib/gen/bp/libbp.a
             $(LIBS) $(BOOST_LIBS);
 
 # Compile the bloodPressureSubscribe web-based binary
-$(CPP_DIR)/app/webserver: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(CPP_LIB_DIR)/Functions.o /opt/zaphoyd-websocketpp-e5b87e6/libwebsocketpp.a $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(CPP_DIR)/lib/gen/temperature/libtemperature.a $(CPP_DIR)/lib/gen/ecg/libecg.a $(CPP_DIR)/lib/gen/command/libcommand.a $(CPP_DIR)/lib/gen/notify/libnotify.a 
+$(CPP_DIR)/app/webserver: $(CPP_LIB_DIR)/SimpleDDS.o $(CPP_DIR)/lib/gen/bp/libbp.a $(CPP_LIB_DIR)/Functions.o $(CPP_DIR)/lib/gen/pulseox/libpulseox.a $(CPP_DIR)/lib/gen/temperature/libtemperature.a $(CPP_DIR)/lib/gen/ecg/libecg.a $(CPP_DIR)/lib/gen/command/libcommand.a $(CPP_DIR)/lib/gen/notify/libnotify.a 
 	cd $(CPP_DIR)/app; \
 	g++ -I/opt/zaphoyd-websocketpp-e5b87e6/src -I/opt/boost_1_48_0  -L/opt/boost_1_48_0/stage/lib -c -O2 -o $(CPP_DIR)/app/webServer.o $(CPP_DIR)/app/webServer.cpp $(WEBCPPFLAGS) $(WEBBOOST_LIBS) $(WEBLIBS); \
 	g++  -I$(CPP_DIR)/lib/gen/command/ -I$(CPP_DIR)/lib/gen/notify/ -I$(CPP_DIR)/lib/gen/EbD_Sensor $(CPPFLAGS) -I$(CPP_DIR)/lib/gen/bp -I$(CPP_DIR)/lib/gen/pulseox -I$(CPP_DIR)/lib/gen/temperature -I$(CPP_DIR)/lib/gen/ecg -c -O2 -o $(CPP_DIR)/app/web-listener.o $(CPP_DIR)/app/web-listener.cpp $(WEBCPPFLAGS) $(WEBLIBS) ; \
