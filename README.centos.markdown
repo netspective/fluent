@@ -101,6 +101,8 @@ Boost libraries are intended to be widely used, and usable across a broad spectr
 
         $ make install
         
+        $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+        
 <h4>MONGO-DB  INSTALLATION:</h4>
 -------------------------------
 
@@ -387,6 +389,21 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
         $ make 
        
         $ make install
+        
+<h4>ADD ENVIRONMENT VARIABLES IN USER PROFILES</h4>
+---------------------------------------------------
+
+* Open the following file from the home path of user logged in 
+
+        $ vim .bash_profile
+        
+* Add the following environment in the file
+
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+        export PATH=/usr/local/ruby/bin:/opt/ruby-1.9.2-p0/bin:$PATH
+        export GEM_HOME=/opt/ruby-1.9.2-p0
+        source /opt/HDE/x86_64.linux2.6/release.com
+
     
 <h4>COMPILATION STEPS</h4>
 --------------------------
@@ -416,7 +433,7 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
         $ cd ../../bin/
 
 
-<h4>Apache Configuration </h4>
+<h4>APACHE CONFIGURATION </h4>
 
 * Append the following configuration in /etc/httpd/conf/httpd.conf 
  
@@ -439,6 +456,17 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 * Start Apache webserer
 
         $ /etc/init.d/httpd start
+        
+* Accessing Publisher and subscriber broswer
+
+        http://<ip-address>/index.php
+
+
+<h4>RUNNING WEBSOCKET </h4>
+
+        $ ./webserver <websocket-ip> <websocket-port> <data-generator-ip> <data-generator-port>
+
+* Note : If giving hostname instead of ip make sure with name server entry
 
 <h4>STEPS TO RUN THE APPLICATIONS </h4>
 
