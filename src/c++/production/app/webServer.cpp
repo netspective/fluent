@@ -9,18 +9,25 @@ using namespace websocketweb;
 
 int main(int argc, char* argv[]) 
 {
-	std::string host = "172.16.1.96";
-	short port = 9003;
+	std::string host;
+	int port;
+	std::string data_host;
+	int data_port;
 	std::string full_host;
-	if (argc == 3) 
-	{
 		host = argv[1];
 		port = atoi(argv[2]);
+		data_host = argv[3];
+		data_port = atoi(argv[4]);
+	if (argc < 4) 
+	{
+		std::cout<<"\n\n Missing Arguments ./webserver <websocket-ip> <websocket-port> <data-gen-ip> <data-gen-port>\n\n";
 	}
+	//std::cout<<"\n\n Data Generator : "<<data_gen_ip<<":"<<data_gen_port<<"\n\n";
 	std::stringstream temp;
 	temp << host << ":" << port;	
 	full_host = temp.str();
-	web_server_handler_ptr web_handler(new web_server_handler());
+	web_server_handler_ptr web_handler(new web_server_handler(data_host,data_port));
+	//web_server_handler_ptr web_handler(new web_server_handler());
 	try 
 	{
 		boost::asio::io_service io_service;

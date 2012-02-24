@@ -27,12 +27,21 @@ using namespace DDS;
 using namespace std;
 using namespace com::netspective::medigy;
 
+web_server_handler::web_server_handler(string dataip,int dataport)
+{
+	data_gen_ip=dataip;
+	data_gen_port=dataport;
+
+
+}
+
 void web_server_handler::validate(session_ptr client) 
 {
 	std::stringstream err;
-	std::cout<< "\n Client : "<<client <<" Resource :  " <<client->get_resource()<< "Origin  : "<< client->get_origin() <<"\n";
-}
 
+	cout<<"\n DATA-GEN-IP:PORT "<<data_gen_ip<<":"<<data_gen_port<<"\n\n";
+	cout<< "\n Client : "<<client <<" Resource :  " <<client->get_resource()<< "Origin  : "<< client->get_origin() <<"\n";
+}
 
 void web_server_handler::on_open(session_ptr client) 
 {
@@ -270,206 +279,206 @@ void *web_server_handler::startTopicsThread(void *arg)
 					topictemp<<data[i].name;
 					test.name_topics=test.name_topics+";"+topictemp.str();
 					topictemp.str("");
-					 if((test.name_topics.find("BloodPressure"))!=string::npos)
+					 					
+					stringstream bp_prtemp;
+					SimpleDDS *bp_simpledds;
+					BloodPressureTypeSupport_var bp_typesupport;
+    					DataReader_ptr bp_reader;
+    					BloodPressureDataReader_var bp_bpReader;
+    					ReturnCode_t bp_status;
+					int i=0;
+					DDS::TopicQos bp_tQos;
+					getQos(bp_tQos);
+        				bp_tQos.durability_service.history_depth= 1024;
+					bp_simpledds = new SimpleDDS(bp_tQos);
+					bp_typesupport = new BloodPressureTypeSupport();
+    					bp_reader = bp_simpledds->subscribe(bp_typesupport);
+    					bp_bpReader = BloodPressureDataReader::_narrow(bp_reader);
+   					BloodPressureSeq  bp_bpList;
+     					SampleInfoSeq     bp_infoSeq;
+
+					
+					stringstream pulse_prtemp;
+					SimpleDDS *pulse_simpledds;
+					PulseOximeterTypeSupport_var pulse_typesupport;
+		    			DataReader_ptr pulse_reader;
+		    			PulseOximeterDataReader_var pulse_bpReader;
+		    			ReturnCode_t pulse_status;
+					DDS::TopicQos pulse_tQos;
+					getQos(pulse_tQos);
+		        		pulse_tQos.durability_service.history_depth= 1024;
+					pulse_simpledds = new SimpleDDS(pulse_tQos);
+					pulse_typesupport = new PulseOximeterTypeSupport();
+		    			pulse_reader = pulse_simpledds->subscribe(pulse_typesupport);
+		    			pulse_bpReader = PulseOximeterDataReader::_narrow(pulse_reader);
+		   			PulseOximeterSeq  pulse_bpList;
+		     			SampleInfoSeq pulse_infoSeq;
+					
+
+					stringstream temp_prtemp;
+					 SimpleDDS *temp_simpledds;
+					 TemperatureTypeSupport_var temp_typesupport;
+	    		 		 DataReader_ptr temp_reader;
+				    	 TemperatureDataReader_var temp_bpReader;
+				    	 ReturnCode_t temp_status;
+					 DDS::TopicQos temp_tQos;
+					 getQos(temp_tQos);
+				         temp_simpledds = new SimpleDDS(temp_tQos);
+					 temp_typesupport = new TemperatureTypeSupport();
+					 temp_reader = temp_simpledds->subscribe(temp_typesupport);
+			      		 temp_bpReader = TemperatureDataReader::_narrow(temp_reader);
+			   	   	 TemperatureSeq  temp_bpList;
+				     	 SampleInfoSeq   temp_infoSeq;
+
+
+					stringstream ecg_prtemp;
+					 SimpleDDS *ecg_simpledds;
+			 		 ECGTypeSupport_var ecg_typesupport;
+				    	 DataReader_ptr ecg_reader;
+				    	 ECGDataReader_var ecg_ecgReader;
+				    	 ReturnCode_t ecg_status;
+			 	         ecg_simpledds = new SimpleDDS();
+					 ecg_typesupport = new ECGTypeSupport();
+					 ecg_reader = ecg_simpledds->subscribe(ecg_typesupport);
+			    		 ecg_ecgReader = ECGDataReader::_narrow(ecg_reader);
+			   	   	 ECGSeq  ecg_ecgList;
+				     	 SampleInfoSeq     ecg_infoSeq;
+
+					if((test.name_topics.find("BloodPressure"))!=string::npos)
 					{	
-						stringstream prtemp;
-						SimpleDDS *simpledds;
-						BloodPressureTypeSupport_var typesupport;
-    						DataReader_ptr reader;
-    						BloodPressureDataReader_var bpReader;
-    						ReturnCode_t status;
-						int i=0;
-						DDS::TopicQos tQos;
-						getQos(tQos);
-        					tQos.durability_service.history_depth= 1024;
-							simpledds = new SimpleDDS(tQos);
-						typesupport = new BloodPressureTypeSupport();
-    						reader = simpledds->subscribe(typesupport);
-    						bpReader = BloodPressureDataReader::_narrow(reader);
-   						BloodPressureSeq  bpList;
-     						SampleInfoSeq     infoSeq;
 						int loopexit=0;
 						while (loopexit!=100) 
 						{
-        						 	status = bpReader->take(
-        						    	bpList,
-        						    	infoSeq,
-        						    	LENGTH_UNLIMITED,
-        						    	ANY_SAMPLE_STATE,
-        						   	ANY_VIEW_STATE,
-        						    	ANY_INSTANCE_STATE);
-        						 	//checkStatus(status, "take");
-        						  	loopexit++;
-        				  			for (i = 0; i < bpList.length(); i++) 
-					  			{
-									if(infoSeq[i].valid_data)
+      		 	bp_status = bp_bpReader->take(bp_bpList,bp_infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
+							loopexit++;
+        				  		for (i = 0; i < bp_bpList.length(); i++) 
+					  		{
+								if(bp_infoSeq[i].valid_data)
+								{
+									bp_prtemp<<bp_bpList[i].deviceID;
+									if((test.name_topics.find(bp_prtemp.str()))==string::npos)
 									{
-				
-										
-										prtemp<<bpList[i].deviceID;
-										if((test.name_topics.find(prtemp.str()))==string::npos)
-										{
-											test.name_topics=test.name_topics+","+prtemp.str();
-										}
-											
-										prtemp.str("");
+										test.name_topics=test.name_topics+","+bp_prtemp.str();
 									}
+											
+									bp_prtemp.str("");
 								}
-							status =bpReader->return_loan(bpList, infoSeq);
-		       					checkStatus(status, "return_loan");
+							}
+							bp_status =bp_bpReader->return_loan(bp_bpList, bp_infoSeq);
+		       					checkStatus(bp_status, "return_loan");
 							usleep(99990);
 						}
        				
-				}	
+					}	
 		
 		
 				if((test.name_topics.find("PulseOximeter"))!=string::npos)
 				{	
-					stringstream prtemp;
-					SimpleDDS *simpledds;
-					PulseOximeterTypeSupport_var typesupport;
-		    			DataReader_ptr reader;
-		    			PulseOximeterDataReader_var bpReader;
-		    			ReturnCode_t status;
-					int i=0;
-					DDS::TopicQos tQos;
-					getQos(tQos);
-		        		tQos.durability_service.history_depth= 1024;
-					simpledds = new SimpleDDS(tQos);
-					typesupport = new PulseOximeterTypeSupport();
-		    			reader = simpledds->subscribe(typesupport);
-		    			bpReader = PulseOximeterDataReader::_narrow(reader);
-		   			PulseOximeterSeq  bpList;
-		     			SampleInfoSeq     infoSeq;
+					
 	
 					int loopexit=0;
 					while (loopexit!=100) 
 					{
-				status = bpReader->take(bpList,	infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
-        	 				//checkStatus(status, "take");
-        	  				loopexit++;
-          				for (i = 0; i < bpList.length(); i++) 
+	pulse_status = pulse_bpReader->take(pulse_bpList,pulse_infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
+       	  				loopexit++;
+          				for (i = 0; i < pulse_bpList.length(); i++) 
 	  				{
-						if(infoSeq[i].valid_data)
+						if(pulse_infoSeq[i].valid_data)
 						{
-							prtemp<<bpList[i].deviceID;
-							if((test.name_topics.find(prtemp.str()))==string::npos)
+							pulse_prtemp<<pulse_bpList[i].deviceID;
+							if((test.name_topics.find(pulse_prtemp.str()))==string::npos)
 							{
 
-								test.name_topics=test.name_topics+","+prtemp.str();
+								test.name_topics=test.name_topics+","+pulse_prtemp.str();
 							}
 							
-							prtemp.str("");
+							pulse_prtemp.str("");
 							
 						}
 									
 					}		
-					status = bpReader->return_loan(bpList, infoSeq);
-	       				checkStatus(status, "return_loan");
+					pulse_status = pulse_bpReader->return_loan(pulse_bpList, pulse_infoSeq);
+	       				checkStatus(pulse_status, "return_loan");
 	       				usleep(99990);
 			
-				}
+					}
 
-			}
+				}
 			if((test.name_topics.find("Temperature"))!=string::npos)
 			{
-				stringstream prtemp;
-				 SimpleDDS *simpledds;
-				 TemperatureTypeSupport_var typesupport;
-    		 		 DataReader_ptr reader;
-			    	 TemperatureDataReader_var bpReader;
-			    	 ReturnCode_t status;
-				 int i=0;
-				 DDS::TopicQos tQos;
-				 getQos(tQos);
-			         simpledds = new SimpleDDS(tQos);
-				 typesupport = new TemperatureTypeSupport();
-				 reader = simpledds->subscribe(typesupport);
-		      		 bpReader = TemperatureDataReader::_narrow(reader);
-		   	   	 TemperatureSeq  bpList;
-			     	 SampleInfoSeq     infoSeq;
+
 				 int loopexit=0;
 				while (loopexit!=1000) 
 				{
-			         	status = bpReader->take(
-        	    			bpList,
-        	    			infoSeq,
+			         	temp_status = temp_bpReader->take(
+        	    			temp_bpList,
+        	    			temp_infoSeq,
         	    			LENGTH_UNLIMITED,
 			            	ANY_SAMPLE_STATE,
         	   			ANY_VIEW_STATE,
         	    			ANY_INSTANCE_STATE);
-        	 			//checkStatus(status, "take");
 			          	loopexit++;
-        	  			for (i = 0; i < bpList.length(); i++) 
+        	  			for (i = 0; i < temp_bpList.length(); i++) 
 		  			{
-						if(infoSeq[i].valid_data)
+						if(temp_infoSeq[i].valid_data)
 						{
-							prtemp<<bpList[i].deviceID;
-							if((test.name_topics.find(prtemp.str()))==string::npos)
+							temp_prtemp<<temp_bpList[i].deviceID;
+							if((test.name_topics.find(temp_prtemp.str()))==string::npos)
 							{
 			
-								test.name_topics=test.name_topics+","+prtemp.str();
+								test.name_topics=test.name_topics+","+temp_prtemp.str();
 							}
 							
-						prtemp.str("");
+						temp_prtemp.str("");
 						}
 					
 					}
-					status = bpReader->return_loan(bpList, infoSeq);
-       					checkStatus(status, "return_loan");
+					temp_status = temp_bpReader->return_loan(temp_bpList, temp_infoSeq);
+       					checkStatus(temp_status, "return_loan");
 					usleep(999);
 				}
 			}
 		if((test.name_topics.find("ECG"))!=string::npos)
 		{
-			 stringstream prtemp;
-			 SimpleDDS *simpledds;
-	 		 ECGTypeSupport_var typesupport;
-		    	 DataReader_ptr reader;
-		    	 ECGDataReader_var ecgReader;
-		    	 ReturnCode_t status;
-			 int i=0;
-	 	         simpledds = new SimpleDDS();
-			 typesupport = new ECGTypeSupport();
-			 reader = simpledds->subscribe(typesupport);
-	    		 ecgReader = ECGDataReader::_narrow(reader);
-	   	   	 ECGSeq  ecgList;
-		     	 SampleInfoSeq     infoSeq;
+			 
 			 int m_count=0;
 	 		 int loopexit=0;
 			 while (loopexit!=1000) 
 			 {
-         			status = ecgReader->take(
-         		   	ecgList,
-         		   	infoSeq,
+         			ecg_status = ecg_ecgReader->take(
+         		   	ecg_ecgList,
+         		   	ecg_infoSeq,
          		   	LENGTH_UNLIMITED,
          		   	ANY_SAMPLE_STATE,
          		  	ANY_VIEW_STATE,
          		   	ANY_INSTANCE_STATE);
-         			//checkStatus(status, "take");
-         		 
+        		 
 				loopexit++;
-         		 	for (i = 0; i < ecgList.length(); i++) 
+         		 	for (i = 0; i < ecg_ecgList.length(); i++) 
 	 		 	{
-					if(infoSeq[i].valid_data)
+					if(ecg_infoSeq[i].valid_data)
 					{
-						prtemp<<ecgList[i].deviceID;
-						if((test.name_topics.find(prtemp.str()))==string::npos)
+						ecg_prtemp<<ecg_ecgList[i].deviceID;
+						if((test.name_topics.find(ecg_prtemp.str()))==string::npos)
 						{
 
-						test.name_topics=test.name_topics+","+prtemp.str();
+						test.name_topics=test.name_topics+","+ecg_prtemp.str();
 						}
 						
-						prtemp.str("");
+						ecg_prtemp.str("");
 					}
 						
 				}
-				status = ecgReader->return_loan(ecgList, infoSeq);
-       				checkStatus(status, "return_loan");
+				ecg_status = ecg_ecgReader->return_loan(ecg_ecgList, ecg_infoSeq);
+       				checkStatus(ecg_status, "return_loan");
 	  		}
 			
        
     		}
+
+
+
+
 
            			 }
                         
@@ -750,14 +759,14 @@ void *web_server_handler::startThread(void *arg)
 			typesupport = new BloodPressureTypeSupport();
 			writer = simpledds->publish(typesupport);
 			bpWriter = BloodPressureDataWriter::_narrow(writer);
-			hostInfo = gethostbyname("172.16.1.91");
+			hostInfo = gethostbyname(data_gen_ip.c_str());
 			if (hostInfo == NULL) 
 			{
 					
 				exit(1);
 			}
 			
-			serverPort=5000;
+			serverPort=data_gen_port;
 			cin.get(c); 
 			socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 		
@@ -892,13 +901,13 @@ void *web_server_handler::startThread(void *arg)
 			typesupport = new PulseOximeterTypeSupport();
 			writer = simpledds->publish(typesupport);
 			bpWriter = PulseOximeterDataWriter::_narrow(writer);
-			hostInfo=gethostbyname("172.16.1.91");
+			hostInfo=gethostbyname(data_gen_ip.c_str());
 	
 			if (hostInfo == NULL) 
 			{	
 				
 			}
-			serverPort=5000;
+			serverPort=data_gen_port;
 			cin.get(c); 
 			socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 			if (socketDescriptor < 0) 
@@ -1030,13 +1039,14 @@ void *web_server_handler::startThread(void *arg)
 			typesupport = new TemperatureTypeSupport();
 			writer = simpledds->publish(typesupport);
 			bpWriter = TemperatureDataWriter::_narrow(writer);
-			hostInfo = gethostbyname("172.16.1.91");
+			hostInfo = gethostbyname(data_gen_ip.c_str());
 	
 			if (hostInfo == NULL) 
 			{
 				exit(1);
 			}
-			serverPort=5000;
+			
+			serverPort=data_gen_port;
 			cin.get(c); 
 			socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 			if (socketDescriptor < 0) 
@@ -1170,18 +1180,10 @@ void *web_server_handler::startThread(void *arg)
 			typesupport = new ECGTypeSupport();
 			writer = simpledds->publish(typesupport);
 			ecgWriter = ECGDataWriter::_narrow(writer);
-			hostInfo = gethostbyname("172.16.1.91");
-			if (hostInfo == NULL) 
-			{
-			
-			}
-			serverPort=5000;
+			hostInfo = gethostbyname(data_gen_ip.c_str());
+			serverPort=data_gen_port;
 			cin.get(c); 
 			socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
-			if (socketDescriptor < 0) 
-			{	
-		
-			}	
 			serverAddress.sin_family = hostInfo->h_addrtype;
 			memcpy((char *) &serverAddress.sin_addr.s_addr,hostInfo->h_addr_list[0], hostInfo->h_length);
 			serverAddress.sin_port = htons(serverPort);

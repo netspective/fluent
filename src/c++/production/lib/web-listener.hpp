@@ -14,6 +14,8 @@ namespace websocketweb {
 
 
 static std::string dlist;
+static std::string data_gen_ip;
+static int data_gen_port;
 static int nofy_flag;
 class web_server_handler : public websocketpp::connection_handler {
 public:
@@ -32,6 +34,7 @@ public:
 	std::string currentdevice[100];
 	int pthread_count;
 	web_server_handler() {}
+	web_server_handler(std::string dataip,int dataport);
 	virtual ~web_server_handler() {}
 	
 	void validate(websocketpp::session_ptr client); 

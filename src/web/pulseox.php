@@ -1,24 +1,29 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<!-- saved from url=(0024)http://demo.fluent.netspective.com/ -->
+<?php
+include "config.php"
+?>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Netspective Fluent</title>
-<link rel="shortcut icon" href="http://demo.fluent.netspective.com/favicon.ico">
+<link rel="shortcut icon"  href="<?php echo DOMAIN_URL?>/favicon.ico">
 <meta name="csrf-param" content="authenticity_token">
 <meta name="csrf-token" content="qN+/7gTXZbj2seEMlDjmP8FDLi9QjFkC39h/ENDT/aY=">
-<link href="http://demo.fluent.netspective.com/medi/index_files/reset.css" media="screen" rel="stylesheet" type="text/css">
-<link href="http://demo.fluent.netspective.com/medi/index_files/core.css" media="screen" rel="stylesheet" type="text/css">
-<link href="http://demo.fluent.netspective.com/medi/index_files/sections.css" media="screen" rel="stylesheet" type="text/css">
-<link href="http://demo.fluent.netspective.com/medi/index_files/messages.css" media="screen" rel="stylesheet" type="text/css">
-<script type="text/javascript" src="jquery-1.6.3.min.js"></script>
-<script type="text/javascript" src="jquery.flot.js"></script>
-<script type="text/javascript" src="cookie.js"></script>
+<link href="<?php echo FLUENT_PATH;?>/style.css" media="screen" rel="stylesheet" type="text/css">
+<link href="<?php echo FLUENT_PATH;?>/index_files/reset.css" media="screen" rel="stylesheet" type="text/css">
+<link href="<?php echo FLUENT_PATH;?>/index_files/core.css" media="screen" rel="stylesheet" type="text/css">
+<link href="<?php echo FLUENT_PATH;?>/index_files/sections.css" media="screen" rel="stylesheet" type="text/css">
+<link href="<?php echo FLUENT_PATH;?>/index_files/messages.css" media="screen" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="<?php echo FLUENT_PATH;?>/jquery-1.6.3.min.js"></script>
+<script type="text/javascript" src="<?php echo FLUENT_PATH;?>/jquery.flot.js"></script>
+<script type="text/javascript" src="<?php echo FLUENT_PATH;?>/cookie.js"></script>
+<script type="text/javascript" src="<?php echo FLUENT_PATH;?>/index_files/table.js"></script>
+</head>
 <body>
 
 <div id="pageload" style="display: none;">1325742135</div>
 <div id="gln" style="display: none;">&nbsp;Loading…</div>
 	<div id="modal-stream-chooser" style="display: none;">
 	<h2>Streams</h2>
-	<h4>Go to the <a href="http://demo.fluent.netspective.com/streams">streams overview</a>.</h4>
+	<h4>Go to the <a href="<?php echo GRAYLOG_URL;?>/streams">streams overview</a>.</h4>
 	<ul id="modal-stream-chooser-list">
 	<li>No streams defined</li>
 	</ul>
@@ -26,10 +31,10 @@
 
 	<div id="modal-host-chooser" style="display: none;">
 		<h2>Hosts</h2>
-		<h4>Go to the <a href="http://demo.fluent.netspective.com/hosts">hosts overview</a>.</h4>
+		<h4>Go to the <a href="<?php echo GRAYLOG_URL;?>/hosts">hosts overview</a>.</h4>
 	</div>
 
-	<div id="back-to-top">Back to top</div>
+	
 	<div id="notification-notice" class="notification notification-flash" style="display: none; ">
       		<span class="notification-title">Success!</span>
       		Logged in successfully
@@ -38,63 +43,30 @@
 	</div>
   	<div id="top">
     	<div id="userbar">
-      		Logged in as admin &nbsp;<a href="http://demo.fluent.netspective.com/logout">(Log out)</a>
+      		Logged in as admin &nbsp;<a href="<?php echo GRAYLOG_URL;?>/logout">(Log out)</a>
     	</div>
 	
-	<a href="http://demo.fluent.netspective.com/messages"><img alt="Netspective" id="toplogo" src="http://demo.fluent.netspective.com/medi/index_files/netspective.png"></a>
+<a href="<?php echo DOMAIN_URL;?>/messages"><img alt="Netspective" id="toplogo" src="<?php echo FLUENT_PATH;?>/index_files/covidien.png"></a>	
 	
 	<ul id="topmenu">
-	<li class=""><a href="http://demo.fluent.netspective.com/messages">Messages</a></li>
-	<li class=""><a href="http://demo.fluent.netspective.com/streams">Streams</a></li>
-      	<li class="topmenu-active"> <a href="http://demo.fluent.netspective.com/medi/index.php">DEVICES</a></li>
-      	<li class=""><a href="http://demo.fluent.netspective.com/analytics">Analytics</a></li>
-      	<li class=""><a href="http://demo.fluent.netspective.com/hosts">Hosts</a></li>
-      	<li class=""><a href="http://demo.fluent.netspective.com/blacklists">Blacklists</a></li>
-      	<li class=""><a href="http://demo.fluent.netspective.com/settings">Settings</a></li>
-      	<li class=""><a href="http://demo.fluent.netspective.com/users">Users</a></li>
+	<li class=""><a href="<?php echo GRAYLOG_URL;?>/messages">Messages</a></li>
+	<li class=""><a href="<?php echo GRAYLOG_URL;?>/streams">Streams</a></li>
+	<li class="topmenu-active"> <a href="<?php echo APACHE_URL;?>/index.php">DEVICES</a></li>
+      	<li class=""><a href="<?php echo GRAYLOG_URL;?>/analytics">Analytics</a></li>
+      	<li class=""><a href="<?php echo GRAYLOG_URL;?>/hosts">Hosts</a></li>
+      	<li class=""><a href="<?php echo GRAYLOG_URL;?>/blacklists">Blacklists</a></li>
+      	<li class=""><a href="<?php echo GRAYLOG_URL;?>/settings">Settings</a></li>
+      	<li class=""><a href="<?php echo GRAYLOG_URL;?>/users">Users</a></li>
     	</ul>
 </div>
 <br style="clear: both;">
 <div id="content-top">
 	<div id="content-tabs">
-	      <br style="clear: both;">
-	</div>
-</div>
-
-<div id="main-left">
-	<div id="content">
-		<div id="content-inner">
-				<h3><a href="http://demo.fluent.netspective.com/medi/index.php" >HOME</a></h3> </br>
-				<h3 onclick="linkedlist('')"> PULSEOX  </h3> </br>
-				<span id="devices_list"></span>
-				</br>  <h3>Other Domains</h3>
-				<div id="messages-bottom">
-				</div>
-				 <ul id="domain-menu">
-				</br>
-				
-    				  <li class=""><a href="http://demo.fluent.netspective.com/medi/bp.php">BP</a></li></br>
-    				  <li class=""> <a href="http://demo.fluent.netspective.com/medi/temp.php">TEMPERATURE</a></li></br>
-    				  <li class=""><a href="http://demo.fluent.netspective.com/medi/ecg.php">ECG</a></li></br>
-    				  <li class=""><a href="http://demo.fluent.netspective.com/medi/sensor.php">EbD_SENSOR</a></li></br>
-       				</ul>
-				<br style="clear: both;">
-
-		</div>
-
-	</div>
-	<div class="content-bottom">
-		<div class="content-bottom-left"><img alt="Contentedge_l" src="http://demo.fluent.netspective.com/medi/index_files/contentedge_l.png"></div>
-      		<div class="content-bottom-right"><img alt="Contentedge_r" src="http://demo.fluent.netspective.com/medi/index_files/contentedge_r.png"></div>
-      		<br style="clear: both;">
-    	</div>
-</div>
-
 <div id="main-right">
-	<div id="sidebar" style="height: 732px; ">
-	        <!--<a href="http://demo.fluent.netspective.com/#" id="sidebar-hide-link" title="Close sidebar">x</a>-->
+	<div id="sidebar" style="width:750px;height:150px ">
+
         	<div id="sidebar-inner">
-		       
+		       <button name="backbtn" value="BACK" onclick="location='devicelist.php'"/>Back To DeviceList</button>
 			<div id="messages-content">
 
 
@@ -102,8 +74,8 @@
 			
 	        </div>
 	        <div class="content-bottom content-bottom-sidebar">
-          		<div class="content-bottom-left"><img alt="Contentedge_l" src="http://demo.fluent.netspective.com/medi/index_files/contentedge_l.png"></div>
-          		<div class="content-bottom-right"><img alt="Contentedge_r" src="http://demo.fluent.netspective.com/medi/index_files/contentedge_r.png"></div>
+          		<div class="content-bottom-left"><img alt="Contentedge_l" src="<?php echo FLUENT_PATH;?>/index_files/contentedge_l.png"></div>
+          		<div class="content-bottom-right"><img alt="Contentedge_r" src="<?php echo FLUENT_PATH;?>/index_files/contentedge_r.png"></div>
        		 	<br style="clear: both;">
         	</div>
 	</div>
@@ -141,6 +113,13 @@ Pulse - > 90</br>
 
 </div>
 </div>
+	</div>
+</div>
+
+
+</div>
+
+
 
 <br style="clear: both;"><br>
 <script type="text/javascript">
@@ -179,15 +158,10 @@ function linkedlist(value) {
 				var series1 = new Array();
 				var series2 = new Array();
 				var series3 = new Array();
-var datalength = 0;
-				//var vdat = [ series1, series2, series3 ];
-			
+				var datalength = 0;
 				var vdat = new Array();
-			    
-			    var options = {
-			    	legend: { show: true, position: "nw" },
-			    	grid: { hoverable: true, clickable: true }	};
-			    var plot = new Array();
+			        var options = {legend: { show: true, position: "nw" },grid: { hoverable: true, clickable: true }	};
+			        var plot = new Array();
 				var arr = new Array();
 				var total=0;
 				var curr_tim = new Date();
@@ -217,11 +191,7 @@ function init() {
 }
 
 function connect() {
-	url = "ws://203.129.254.88:9003/pulseox";
-
-
-
-	//url = "ws://203.129.254.88:9003/bp";
+	url = "<?php echo WEBSOCKET;?>/pulse";
 	console.log(url);
 	
 	if ("WebSocket" in window) {

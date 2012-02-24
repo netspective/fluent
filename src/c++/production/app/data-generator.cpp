@@ -297,8 +297,10 @@ int main(int argc, char* argv[]) {
 	socklen_t addrlen;
 	pthread_attr_t attr;
 	pthread_t id;
-	char *ip_s=argv[0];
-	char *port_s=argv[1];
+	char *ip_s=argv[1];
+	char *port_s=argv[2];
+        cout <<"\n IP: "<<ip_s<<"\n";
+	cout <<"\n PORT: "<<port_s<<"\n";
 	server = create_server(ip_s,port_s);
 	while (1) 
 	{	
