@@ -57,7 +57,7 @@ OpenSplice DDS is one of several open source implementation of the OMG Data Dist
 
         $ yum groupinstall "Development Tools"
         
-        $ yum install zlib zlib-devel bzip2 bzip2-devel python python-devel libicu gcc44 gcc44-c++ pcre pcre-devel openssl openssl-devep httpd
+        $ yum install zlib zlib-devel bzip2 bzip2-devel python python-devel libicu gcc44 gcc44-c++ pcre pcre-devel openssl openssl-devep httpd php
               
 <h6>BOOST LIBRARY</h6>
 
@@ -143,7 +143,7 @@ Boost libraries are intended to be widely used, and usable across a broad spectr
         $ tar -xvf mongodb-linux-x86_64-v1.8-latest.tar.gz 
  
 * Download **SCons** version scons-2.1.0-1.noarch.rpm from the folowing link.[Click here to download](http://sourceforge.net/projects/scons/files/scons/2.1.0/scons-2.1.0-1.noarch.rpm/download)
-	  
+
         $ rpm -ivh scons-2.1.0-1.noarch.rpm
         
 * To compile the "standalone" C++ driver, run the scons command in the installation directory of the driver 
@@ -156,19 +156,41 @@ Boost libraries are intended to be widely used, and usable across a broad spectr
 
 Syslog supported by a wide variety of devices and receivers across multiple platforms and can be used to integrate log data from many different types of systems into a central repository.
 
-* Syslog installation should be done in **Subscriber machine**  
-  
-* Install the rsyslog.x86_64 version using the following command
+* Check for existing syslog and if its exist, use the below listed commands to uninsall it
 
-        $ yum install rsyslog.x86_64
+        $ rpm -aq | grep syslog
 
-* Once the installation got completed update the configurations in the file /etc/syslog.conf with the **server ip address:port.**
+        $ rpm --nodeps -e <syslog_package>
 
-         *.* <graylog-server-ip>:514
+*  Download the syslog and eventlog rpm package ,using following commands
+
+        $ wget ftp://ftp.pbone.net/mirror/centos.karan.org/el5/extras/testing/x86_64/RPMS/syslog-ng-2.0.3-1.el5.kb.x86_64.rpm
+
+        $ wget ftp://ftp.pbone.net/mirror/centos.karan.org/el5/extras/testing/x86_64/RPMS/eventlog-0.2.5-6.el5.kb.x86_64.rpm
+
+* Install syslog  and eventlog rpm uisng the following command
+
+        $ rpm -ivh eventlog-0.2.5-6.el5.kb.x86_64.rpm
+   
+        $ rpm -ivh syslog-ng-2.0.3-1.el5.kb.x86_64.rpm
+
+* Update the configuration in syslog-ng.conf using the following command
+
+        $ vim /etc/syslog-ng/syslog-ng.conf
+
+          destination netspective { udp("172.16.1.96" port(514)); };
+          
+          source s_all {internal(); 
+          
+          unix-stream("/dev/log");
+          
+          file("/proc/kmsg" log_prefix("kernel: "));};
  
+          log { source(s_all); destination(netspective); };
+
 * Command used to restart the syslog are given below
 
-        $ /etc/init.d/syslog restart
+        $ /etc/init.d/syslog-ng restart
                          
 <h6>Elastic Search </h6>
 
@@ -362,6 +384,11 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
         $ cd <WEB_INTERFACE_INSTALLTION_PATH>
 	
+* Update the  IP Address of  **Apache** configuaration in the file app/views/layouts/application.html.erb
+
+         $ <ip-or-hostname-apache-server>
+                    
+
 * To make successful installation of all files from gem package, use the command to install missing libraries 
 
         $ gem install bundler 
@@ -437,7 +464,6 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
 
 * Append the following configuration in /etc/httpd/conf/httpd.conf 
  
-        
 
         Listen 80
         <VirtualHost *:80>
@@ -453,18 +479,37 @@ Syslog supported by a wide variety of devices and receivers across multiple plat
         	</Directory>
         </VirtualHost>
 
+* Update the configuration in the file /opt/netspective-fluent/src/web/config.php
+
+        <?php
+
+          define("GRAYLOG_URL","http://172.16.1.96:3000"); - Specify the IP Address and Port No. of the Graylog2 server
+
+          define("APACHE_URL","http://172.16.1.96:8080");  - Specify the IP Address and Port No. of the apache server
+
+          define("WEBSOCKET","ws://203.129.254.88:9003");  - Specify the IP Address and Port No. of the Webscoket
+
+        // Following both statement can be as default to refer the files containing directory
+      
+           define("FLUENT_PATH","http://demo.fluent.netspective.com/medi"); 
+
+           define("DOMAIN_URL","http://demo.fluent.netspective.com/");
+
+         ?>
+
 * Start Apache webserer
 
         $ /etc/init.d/httpd start
         
-* Accessing Publisher and subscriber broswer
-
-        http://<ip-address>/index.php
-
 
 <h4>RUNNING WEBSOCKET </h4>
 
         $ ./webserver <websocket-ip> <websocket-port> <data-generator-ip> <data-generator-port>
+    
+* Accessing Publisher and subscriber broswer
+
+        http://<ip-address>/index.php
+
 
 * Note : If giving hostname instead of ip make sure with name server entry
 
