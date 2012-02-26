@@ -9,14 +9,14 @@ using namespace std;
 void checkHandle(void* handle, const char *errormsg) {
     if (handle == NULL) {
         fprintf(stderr, "Error. Invalid handle. %s\n", errormsg);
-        exit(0);
+        //exit(0);
     }
 }
 
 void checkStatus(ReturnCode_t status, const char* errormsg) {
     if (status != DDS::RETCODE_OK && status != DDS::RETCODE_NO_DATA) {
         fprintf(stderr, "Error, bad status %d, %s\n", status, errormsg);
-        exit(0);
+       // exit(0);
     }
 }
 
@@ -149,7 +149,7 @@ void SimpleDDS::deleteWriter(DataWriter_ptr writer) {
 
     if (topic->writer != writer) {
         fprintf(stderr, "Error: deleteWriter: bad writer\n");
-        exit(0);
+       // exit(0);
     }
 
     /* Remove the TopicData from the topics vector */
@@ -254,7 +254,7 @@ void SimpleDDS::deleteReader(DataReader_ptr reader) {
 
     if (topic->reader != reader) {
         fprintf(stderr, "Error: deleteReader: bad reader\n");
-        exit(0);
+       // exit(0);
     }
 
     /* Remove the TopicData from the topics vector */

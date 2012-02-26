@@ -113,16 +113,10 @@ void web_server_handler::on_message(session_ptr client,const std::string &msg)
 		{
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-		pthread_create(&pt_ary[pthread_count], &attr, startThread, this);
+		pthread_create(&pt_ary[pthread_count], &attr, startPublisher, this);
 		stringstream checkdev;
 		checkdev<<msg;
 		currentdevice[pthread_count]=checkdev.str();
-		/*for(int px=0;px<=pthread_count;px++)
-		{
-		cout<<"\n PTHREAD COUNT : "<<pthread_count <<"     PTHREAD ID : "<<pt_ary[px];
-		cout<<"         DEVICE NAME : " <<currentdevice[px];
-		}*/
-		//cout<<"\ncount :"<<pthread_count<<"\n";
 		pthread_count++;
 		}
 		
@@ -130,25 +124,12 @@ void web_server_handler::on_message(session_ptr client,const std::string &msg)
 	}
 	else if(msg.find("STOP")!=string::npos)
 	{
-		/*size_t pos;
-		string str2 = msg.substr (msg.rfind(":")); 
-		for(int checkn=0;checkn<pthread_count;checkn++)
-		{
-			
-			if(currentdevice[checkn].find(str2)!=string::npos)
-			{
-				pthread_cancel(pt_ary[checkn]);
-				currentdevice[checkn]="";
-				cout<<"\n\Stopping Device  "<<currentdevice[checkn]<<"\n\n";
-			}
-			
-		}*/
-
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 		pthread_create(&stopid, &attr, stopPublisher, this);
 		
 	}
+	
 	else
 	{
 		pthread_attr_init(&attr);
@@ -215,15 +196,6 @@ void *web_server_handler::stopPublisher(void *arg)
 			CommandControllerTypeSupport_var typesupport;
 			DataWriter_ptr writer;
 			CommandControllerDataWriter_var bpWriter;
-			/*DDS::TopicQos tQos;
-			getQos(tQos);
-				tQos.durability.kind=TRANSIENT_DURABILITY_QOS;
-         			tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-         			tQos.history.depth=10;
-         			tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
-         			tQos.durability_service.history_depth= 1024;
-
-			simpledds = new SimpleDDS(tQos);*/
 			simpledds = new SimpleDDS();
 			typesupport = new CommandControllerTypeSupport();
 			writer = simpledds->publish(typesupport);
@@ -260,156 +232,134 @@ void *web_server_handler::startTopicsThread(void *arg)
 	TopicBuiltinTopicDataSeq data;
 	ReturnCode_t status;
 	SampleInfoSeq info;
+
+
+	/*Domain Based Declaration*/
+	stringstream bp_prtemp;
+	SimpleDDS *bp_simpledds;
+	BloodPressureTypeSupport_var bp_typesupport;
+    	DataReader_ptr bp_reader;
+    	BloodPressureDataReader_var bp_bpReader;
+    	ReturnCode_t bp_status;
+	int i=0;
+	DDS::TopicQos bp_tQos;
+	getQos(bp_tQos);
+        bp_tQos.durability_service.history_depth= 1024;
+	bp_simpledds = new SimpleDDS(bp_tQos);
+	bp_typesupport = new BloodPressureTypeSupport();
+    	bp_reader = bp_simpledds->subscribe(bp_typesupport);
+    	bp_bpReader = BloodPressureDataReader::_narrow(bp_reader);
+   	BloodPressureSeq  bp_bpList;
+     	SampleInfoSeq     bp_infoSeq;
+				
+	stringstream pulse_prtemp;
+	SimpleDDS *pulse_simpledds;
+	PulseOximeterTypeSupport_var pulse_typesupport;
+	DataReader_ptr pulse_reader;
+	PulseOximeterDataReader_var pulse_bpReader;
+	ReturnCode_t pulse_status;
+	DDS::TopicQos pulse_tQos;
+	getQos(pulse_tQos);
+	pulse_tQos.durability_service.history_depth= 1024;
+	pulse_simpledds = new SimpleDDS(pulse_tQos);
+	pulse_typesupport = new PulseOximeterTypeSupport();
+	pulse_reader = pulse_simpledds->subscribe(pulse_typesupport);
+	pulse_bpReader = PulseOximeterDataReader::_narrow(pulse_reader);
+	PulseOximeterSeq  pulse_bpList;
+	SampleInfoSeq pulse_infoSeq;
+			
+
+	stringstream temp_prtemp;
+	SimpleDDS *temp_simpledds;
+	TemperatureTypeSupport_var temp_typesupport;
+	DataReader_ptr temp_reader;
+	TemperatureDataReader_var temp_bpReader;
+	ReturnCode_t temp_status;
+	DDS::TopicQos temp_tQos;
+	getQos(temp_tQos);
+	temp_simpledds = new SimpleDDS(temp_tQos);
+	temp_typesupport = new TemperatureTypeSupport();
+	temp_reader = temp_simpledds->subscribe(temp_typesupport);
+	temp_bpReader = TemperatureDataReader::_narrow(temp_reader);
+	TemperatureSeq  temp_bpList;
+	SampleInfoSeq   temp_infoSeq;
+	stringstream ecg_prtemp;
+	SimpleDDS *ecg_simpledds;
+	ECGTypeSupport_var ecg_typesupport;
+	DataReader_ptr ecg_reader;
+	ECGDataReader_var ecg_ecgReader;
+	ReturnCode_t ecg_status;
+	ecg_simpledds = new SimpleDDS();
+	ecg_typesupport = new ECGTypeSupport();
+	ecg_reader = ecg_simpledds->subscribe(ecg_typesupport);
+	ecg_ecgReader = ECGDataReader::_narrow(ecg_reader);
+	ECGSeq  ecg_ecgList;
+	SampleInfoSeq     ecg_infoSeq;
+
+
+
 	while(1)
 	{
-	 	test.name_topics="";
-		//status=participantReader->take ( data, info, LENGTH_UNLIMITED,DDS::ANY_SAMPLE_STATE,DDS::ANY_VIEW_STATE,DDS::ANY_INSTANCE_STATE) ;
-		status=participantReader->read(data, info, LENGTH_UNLIMITED,DDS::ANY_SAMPLE_STATE,DDS::ANY_VIEW_STATE,DDS::ANY_INSTANCE_STATE);
-		if (status == RETCODE_NO_DATA) 
-		{
-          		continue;
-          	}
-	        for (int i = 0; i < data.length(); i++)
-        	{
-        		if(info[i].valid_data)
-        	        {
-        	        	if((data[i].name[0]!='D')&&(data[i].name[0]!='d'))
-        	                {
-					
-					topictemp<<data[i].name;
-					test.name_topics=test.name_topics+";"+topictemp.str();
-					topictemp.str("");
-					 					
-					stringstream bp_prtemp;
-					SimpleDDS *bp_simpledds;
-					BloodPressureTypeSupport_var bp_typesupport;
-    					DataReader_ptr bp_reader;
-    					BloodPressureDataReader_var bp_bpReader;
-    					ReturnCode_t bp_status;
-					int i=0;
-					DDS::TopicQos bp_tQos;
-					getQos(bp_tQos);
-        				bp_tQos.durability_service.history_depth= 1024;
-					bp_simpledds = new SimpleDDS(bp_tQos);
-					bp_typesupport = new BloodPressureTypeSupport();
-    					bp_reader = bp_simpledds->subscribe(bp_typesupport);
-    					bp_bpReader = BloodPressureDataReader::_narrow(bp_reader);
-   					BloodPressureSeq  bp_bpList;
-     					SampleInfoSeq     bp_infoSeq;
-
-					
-					stringstream pulse_prtemp;
-					SimpleDDS *pulse_simpledds;
-					PulseOximeterTypeSupport_var pulse_typesupport;
-		    			DataReader_ptr pulse_reader;
-		    			PulseOximeterDataReader_var pulse_bpReader;
-		    			ReturnCode_t pulse_status;
-					DDS::TopicQos pulse_tQos;
-					getQos(pulse_tQos);
-		        		pulse_tQos.durability_service.history_depth= 1024;
-					pulse_simpledds = new SimpleDDS(pulse_tQos);
-					pulse_typesupport = new PulseOximeterTypeSupport();
-		    			pulse_reader = pulse_simpledds->subscribe(pulse_typesupport);
-		    			pulse_bpReader = PulseOximeterDataReader::_narrow(pulse_reader);
-		   			PulseOximeterSeq  pulse_bpList;
-		     			SampleInfoSeq pulse_infoSeq;
-					
-
-					stringstream temp_prtemp;
-					 SimpleDDS *temp_simpledds;
-					 TemperatureTypeSupport_var temp_typesupport;
-	    		 		 DataReader_ptr temp_reader;
-				    	 TemperatureDataReader_var temp_bpReader;
-				    	 ReturnCode_t temp_status;
-					 DDS::TopicQos temp_tQos;
-					 getQos(temp_tQos);
-				         temp_simpledds = new SimpleDDS(temp_tQos);
-					 temp_typesupport = new TemperatureTypeSupport();
-					 temp_reader = temp_simpledds->subscribe(temp_typesupport);
-			      		 temp_bpReader = TemperatureDataReader::_narrow(temp_reader);
-			   	   	 TemperatureSeq  temp_bpList;
-				     	 SampleInfoSeq   temp_infoSeq;
-
-
-					stringstream ecg_prtemp;
-					 SimpleDDS *ecg_simpledds;
-			 		 ECGTypeSupport_var ecg_typesupport;
-				    	 DataReader_ptr ecg_reader;
-				    	 ECGDataReader_var ecg_ecgReader;
-				    	 ReturnCode_t ecg_status;
-			 	         ecg_simpledds = new SimpleDDS();
-					 ecg_typesupport = new ECGTypeSupport();
-					 ecg_reader = ecg_simpledds->subscribe(ecg_typesupport);
-			    		 ecg_ecgReader = ECGDataReader::_narrow(ecg_reader);
-			   	   	 ECGSeq  ecg_ecgList;
-				     	 SampleInfoSeq     ecg_infoSeq;
-
-					if((test.name_topics.find("BloodPressure"))!=string::npos)
-					{	
-						int loopexit=0;
-						while (loopexit!=100) 
-						{
-      		 	bp_status = bp_bpReader->take(bp_bpList,bp_infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
-							loopexit++;
-        				  		for (i = 0; i < bp_bpList.length(); i++) 
-					  		{
-								if(bp_infoSeq[i].valid_data)
-								{
-									bp_prtemp<<bp_bpList[i].deviceID;
-									if((test.name_topics.find(bp_prtemp.str()))==string::npos)
-									{
-										test.name_topics=test.name_topics+","+bp_prtemp.str();
-									}
-											
-									bp_prtemp.str("");
-								}
-							}
-							bp_status =bp_bpReader->return_loan(bp_bpList, bp_infoSeq);
-		       					checkStatus(bp_status, "return_loan");
-							usleep(99990);
-						}
-       				
-					}	
 		
-		
-				if((test.name_topics.find("PulseOximeter"))!=string::npos)
-				{	
-					
-	
-					int loopexit=0;
-					while (loopexit!=100) 
-					{
-	pulse_status = pulse_bpReader->take(pulse_bpList,pulse_infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
-       	  				loopexit++;
-          				for (i = 0; i < pulse_bpList.length(); i++) 
-	  				{
-						if(pulse_infoSeq[i].valid_data)
-						{
-							pulse_prtemp<<pulse_bpList[i].deviceID;
-							if((test.name_topics.find(pulse_prtemp.str()))==string::npos)
-							{
-
-								test.name_topics=test.name_topics+","+pulse_prtemp.str();
-							}
-							
-							pulse_prtemp.str("");
-							
-						}
-									
-					}		
-					pulse_status = pulse_bpReader->return_loan(pulse_bpList, pulse_infoSeq);
-	       				checkStatus(pulse_status, "return_loan");
-	       				usleep(99990);
-			
-					}
-
-				}
-			if((test.name_topics.find("Temperature"))!=string::npos)
+		if((test.name_topics.find("BloodPressure"))!=string::npos)
+		{	
+			int loopexit=0;
+			while (loopexit!=100) 
 			{
-
-				 int loopexit=0;
-				while (loopexit!=1000) 
+      			bp_status = bp_bpReader->take(bp_bpList,bp_infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
+				loopexit++;
+        			for (i = 0; i < bp_bpList.length(); i++) 
 				{
+					if(bp_infoSeq[i].valid_data)
+					{
+						bp_prtemp<<bp_bpList[i].deviceID;
+						//cout<<"\n BloodPressure: "<<bp_bpList[i].deviceID<<"\n";
+						if((test.name_topics.find(bp_prtemp.str()))==string::npos)
+						{
+							test.name_topics=test.name_topics+","+bp_prtemp.str();
+						}
+						bp_prtemp.str("");
+					}
+				}
+				bp_status =bp_bpReader->return_loan(bp_bpList, bp_infoSeq);
+				checkStatus(bp_status, "return_loan");
+				usleep(99990);
+			}
+       				
+		}	
+		if((test.name_topics.find("PulseOximeter"))!=string::npos)
+		{	
+			int loopexit=0;
+			while (loopexit!=100) 
+			{
+	pulse_status = pulse_bpReader->take(pulse_bpList,pulse_infoSeq,LENGTH_UNLIMITED,ANY_SAMPLE_STATE,ANY_VIEW_STATE,ANY_INSTANCE_STATE);
+  				loopexit++;
+      				for (i = 0; i < pulse_bpList.length(); i++) 
+  				{
+					if(pulse_infoSeq[i].valid_data)
+					{
+						pulse_prtemp<<pulse_bpList[i].deviceID;
+						if((test.name_topics.find(pulse_prtemp.str()))==string::npos)
+						{
+							test.name_topics=test.name_topics+","+pulse_prtemp.str();
+						}
+						pulse_prtemp.str("");
+					}
+				
+				}		
+				pulse_status = pulse_bpReader->return_loan(pulse_bpList, pulse_infoSeq);
+       				checkStatus(pulse_status, "return_loan");
+       				usleep(99990);
+		
+			}
+		}
+
+		if((test.name_topics.find("Temperature"))!=string::npos)
+		{
+
+			int loopexit=0;
+			while (loopexit!=1000) 
+			{
 			         	temp_status = temp_bpReader->take(
         	    			temp_bpList,
         	    			temp_infoSeq,
@@ -476,25 +426,47 @@ void *web_server_handler::startTopicsThread(void *arg)
        
     		}
 
+		topictemp.str("");
+		topictemp<<test.name_topics;
+		dlist=topictemp.str();
+		topictemp.str("");
+		if(test.name_topics!="")
+		{
+		cout<<"\n\n LIST : "<<dlist<<"\n";
+		}
+		sleep(2);
 
+		status=participantReader->take(data, info, LENGTH_UNLIMITED,DDS::ANY_SAMPLE_STATE,DDS::ANY_VIEW_STATE,DDS::ANY_INSTANCE_STATE);
+		if (status == RETCODE_NO_DATA) 
+		{
+			continue;
+          	}
+		test.name_topics="";
+	        for (int i = 0; i < data.length(); i++)
+        	{
+        		if(info[i].valid_data)
+        	        {
+        	        	if((data[i].name[0]!='D')&&(data[i].name[0]!='d'))
+        	                {
 
-
-
+					topictemp<<data[i].name;
+					//cout<<"\n"<<data[i].name<<"\n";
+					test.name_topics=test.name_topics+";"+topictemp.str();
+					topictemp.str("");
            			 }
+
                         
            		}
+			//status = participantReader->return_loan(data, info);
         	}
-	//status = participantReader->return_loan(data, info);
-       	//checkStatus(status, "return_loan");
-	topictemp.str("");
-	topictemp<<test.name_topics;
-	dlist=topictemp.str();
-	topictemp.str("");
-	cout<<"\n\n LIST : "<<dlist<<"\n";
+		
+		
+	
+
+
 	}
 }
-
-void *web_server_handler::startThread(void *arg)
+void *web_server_handler::startPublisher(void *arg)
 {
 	
 	 web_server_handler test = *((web_server_handler*)arg);
@@ -510,229 +482,7 @@ void *web_server_handler::startThread(void *arg)
 	        strcpy(strDetails[idev++],pchsplit);
 		pchsplit = strtok (NULL, ":");
 	 }
-	 if (!strcmp(msg.c_str(),"bp"))
-	 {
-	 std::stringstream prtemp;
-	 SimpleDDS *simpledds;
-	 BloodPressureTypeSupport_var typesupport;
-    	 DataReader_ptr reader;
-    	 BloodPressureDataReader_var bpReader;
-    	 ReturnCode_t status;
-	 int i=0;
-         DDS::TopicQos tQos;
-	 getQos(tQos);
-         tQos.durability_service.history_depth= 1024;
-         simpledds = new SimpleDDS(tQos);
-	 typesupport = new BloodPressureTypeSupport();
-    	 reader = simpledds->subscribe(typesupport);
-    	 bpReader = BloodPressureDataReader::_narrow(reader);
-   	 BloodPressureSeq  bpList;
-     	 SampleInfoSeq     infoSeq;
-	 while(1)
-	 {
-			status = bpReader->take(
-            	bpList,
-            	infoSeq,
-            	LENGTH_UNLIMITED,
-            	ANY_SAMPLE_STATE,
-           	ANY_VIEW_STATE,
-            	ANY_INSTANCE_STATE);
-         	checkStatus(status, "take");
-          	if (status == RETCODE_NO_DATA) 
-		{
-          		continue;
-          	}
-          	for (i = 0; i < bpList.length(); i++) 
-	  	{
-			if(infoSeq[i].valid_data)
-			{
-			prtemp <<bpList[i].deviceDomain<<",";
-		        prtemp <<bpList[i].deviceID <<","<<bpList[i].timeOfMeasurement<<","<< bpList[i].systolicPressure;
-			prtemp <<","<<bpList[i].diastolicPressure<<","<<bpList[i].pulseRatePerMinute;
-			client->send(test.encode_message("server",prtemp.str().c_str()));
-			
-			prtemp.str("");
-			}
-	  	}
-		status = bpReader->return_loan(bpList, infoSeq);
-       		checkStatus(status, "return_loan");
-
-	}	
-	simpledds->deleteReader(reader);
-        delete simpledds;
-	std::cout << "message from client " << client << ": " << msg << std::endl;
-	}
-
-	if (!strcmp(msg.c_str(),"pulseox"))
-	{
-		std::stringstream prtemp;
-		SimpleDDS *simpledds;
-		PulseOximeterTypeSupport_var typesupport;
-	    	DataReader_ptr reader;
-	    	PulseOximeterDataReader_var bpReader;
-	    	ReturnCode_t status;
-		int i=0;
-	        DDS::TopicQos tQos;
-	        tQos.durability.kind=VOLATILE_DURABILITY_QOS;
-	        tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-	        tQos.history.depth=10;
-	        tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
-	        tQos.durability_service.history_depth= 1024;
-	        simpledds = new SimpleDDS(tQos);
-		typesupport = new PulseOximeterTypeSupport();
-	    	reader = simpledds->subscribe(typesupport);
-	    	bpReader = PulseOximeterDataReader::_narrow(reader);
-	   	PulseOximeterSeq  bpList;
-	     	SampleInfoSeq     infoSeq;
-		while (1) 
-		{
-	         	status = bpReader->take(
-	            	bpList,
-	            	infoSeq,
-	            	LENGTH_UNLIMITED,
-	            	ANY_SAMPLE_STATE,
-	           	ANY_VIEW_STATE,
-	            	ANY_INSTANCE_STATE);
-	         	checkStatus(status, "take");
-	          	if (status == RETCODE_NO_DATA) 
-			{
-	          		continue;
-	          	}
-	          	for (i = 0; i < bpList.length(); i++) 
-		  	{
-				if(infoSeq[i].valid_data)
-				{
-					prtemp <<bpList[i].deviceDomain<<",";
-				        prtemp <<bpList[i].deviceID <<","<<bpList[i].timeOfMeasurement<<",";
-					prtemp <<bpList[i].SPO2<<","<<bpList[i].pulseRatePerMinute;
-					client->send(test.encode_message("server",prtemp.str().c_str()));	
-					prtemp.str("");
-				
-				}
-				sleep(1);
-			}
-			status = bpReader->return_loan(bpList, infoSeq);
-	        	checkStatus(status, "return_loan");
-		
-	  	}
-   	     simpledds->deleteReader(reader);
-             delete simpledds;
-
-	}
-	if (!strcmp(msg.c_str(),"temp"))
-	{
-		std::stringstream prtemp;
-	 	
-		SimpleDDS *simpledds;
-		TemperatureTypeSupport_var typesupport;
-		DataReader_ptr reader;
-		TemperatureDataReader_var bpReader;
-    	 	ReturnCode_t status;
-	 	int i=0;
-	       	DDS::TopicQos tQos;
-         	tQos.durability.kind=VOLATILE_DURABILITY_QOS;
-         	tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
-         	tQos.history.depth=10;
-         	tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
-         	tQos.durability_service.history_depth= 1024;
-         	simpledds = new SimpleDDS(tQos);
 	
-		typesupport = new TemperatureTypeSupport();
-    	 	reader = simpledds->subscribe(typesupport);
-    	 	bpReader = TemperatureDataReader::_narrow(reader);
-   	 	TemperatureSeq  bpList;
-     	 	SampleInfoSeq     infoSeq;
-	 	while (1) 
-	 	{
-         		status = bpReader->take(
-         	   	bpList,
-         	   	infoSeq,
-         	   	LENGTH_UNLIMITED,
-         	   	ANY_SAMPLE_STATE,
-         	  	ANY_VIEW_STATE,
-         	   	ANY_INSTANCE_STATE);
-         		checkStatus(status, "take");
-         	 	if (status == RETCODE_NO_DATA) 
-			{
-         	 		continue;
-         	 	}
-         	 	for (i = 0; i < bpList.length(); i++) 
-	 	 	{
-
-				if(infoSeq[i].valid_data)
-				{
-					prtemp <<bpList[i].deviceDomain<<",";
-				        prtemp <<bpList[i].deviceID <<","<<bpList[i].timeOfMeasurement<<",";
-					prtemp <<bpList[i].temp;
-					client->send(test.encode_message("server",prtemp.str().c_str()));
-					prtemp.str("");
-				}
-				sleep(1);
-				
-	
-			}
-			status = bpReader->return_loan(bpList, infoSeq);
-       			checkStatus(status, "return_loan");
-		
-		}
-		simpledds->deleteReader(reader);
-       		delete simpledds;
-	}	
-	if (!strcmp(msg.c_str(),"ecg"))
-	{
-		std::stringstream prtemp;
-	 	
-		SimpleDDS *simpledds;
-	 	ECGTypeSupport_var typesupport;
-    	 	DataReader_ptr reader;
-    	 	ECGDataReader_var ecgReader;
-    	 	ReturnCode_t status;
-	 	int i=0;
-	
-	 	/*Initializing Subscriber and DataWriter*/
-         	simpledds = new SimpleDDS();
-	 	typesupport = new ECGTypeSupport();
-	
-		reader = simpledds->subscribe(typesupport);
-    	 	ecgReader = ECGDataReader::_narrow(reader);
-   	 	ECGSeq  ecgList;
-     	 	SampleInfoSeq     infoSeq;
-		long m_count=0;
-	 	while (1) 
-		{
-         		status = ecgReader->take(
-            		ecgList,
-            		infoSeq,
-            		LENGTH_UNLIMITED,
-            		ANY_SAMPLE_STATE,
-           		ANY_VIEW_STATE,
-            		ANY_INSTANCE_STATE);
-         		checkStatus(status, "take");
-          		if (status == RETCODE_NO_DATA) 
-			{
-          			continue;
-          		}
-          		for (i = 0; i < ecgList.length(); i++) 
-	  		{
-				if(infoSeq[i].valid_data)
-				{
-					prtemp <<ecgList[i].deviceDomain<<",";
-		        		prtemp <<ecgList[i].deviceID <<","<<ecgList[i].timeOfMeasurement<<","<< ecgList[i].timeInSeconds;
-					prtemp <<","<<ecgList[i].amplitudeMillivolts<<","<<ecgList[i].waveformPeak;
-					client->send(test.encode_message("server",prtemp.str().c_str()));
-					//cout << prtemp.str().c_str()<< "\n"<<m_count++<<"\n";
-					prtemp.str("");
-									
-				}
-		  	}
-			status = ecgReader->return_loan(ecgList, infoSeq);
-	       		checkStatus(status, "return_loan");
-       
-    		}
-		simpledds->deleteReader(reader);
-       		delete simpledds;
-	}
-
 	if (msg[0] == '/') {
 		client->send(test.encode_message("server","unrecognized command"));
 	}
@@ -1017,7 +767,7 @@ void *web_server_handler::startThread(void *arg)
 			//delete simpledds;
 		}
 
-		if(!strcmp(strDetails[1],"TEMP"))
+		if(!strcmp(strDetails[1],"TEMPERATURE"))
 		{
 			int socketDescriptor;
 			unsigned short int serverPort;
@@ -1320,6 +1070,253 @@ void *web_server_handler::startThread(void *arg)
 	}
 	
 	// create JSON message to send based on msg
+	test.send_to_all(test.encode_message(test.m_connections[client],msg));
+	
+    pthread_exit(NULL);
+	
+}
+void *web_server_handler::startThread(void *arg)
+{
+	
+	 web_server_handler test = *((web_server_handler*)arg);
+	 session_ptr client=test.temp_client;
+	 std::string &msg=test.temp_msg;
+	 std::cout << "\n\n"<<"Recevied Message :"<<msg<<"\n";
+	 char *pchsplit;
+         int idev=0;
+  	 char strDetails[4][20];
+	 pchsplit = strtok ((char*)msg.c_str(),":");
+	 while (pchsplit != NULL)
+	 {
+	        strcpy(strDetails[idev++],pchsplit);
+		pchsplit = strtok (NULL, ":");
+	 }
+	 if (!strcmp(msg.c_str(),"bp"))
+	 {
+	 std::stringstream prtemp;
+	 SimpleDDS *simpledds;
+	 BloodPressureTypeSupport_var typesupport;
+    	 DataReader_ptr reader;
+    	 BloodPressureDataReader_var bpReader;
+    	 ReturnCode_t status;
+	 int i=0;
+         DDS::TopicQos tQos;
+	 getQos(tQos);
+         tQos.durability_service.history_depth= 1024;
+         simpledds = new SimpleDDS(tQos);
+	 typesupport = new BloodPressureTypeSupport();
+    	 reader = simpledds->subscribe(typesupport);
+    	 bpReader = BloodPressureDataReader::_narrow(reader);
+   	 BloodPressureSeq  bpList;
+     	 SampleInfoSeq     infoSeq;
+	 while(1)
+	 {
+			status = bpReader->take(
+            	bpList,
+            	infoSeq,
+            	LENGTH_UNLIMITED,
+            	ANY_SAMPLE_STATE,
+           	ANY_VIEW_STATE,
+            	ANY_INSTANCE_STATE);
+         	checkStatus(status, "take");
+          	if (status == RETCODE_NO_DATA) 
+		{
+          		continue;
+          	}
+          	for (i = 0; i < bpList.length(); i++) 
+	  	{
+			if(infoSeq[i].valid_data)
+			{
+			prtemp <<bpList[i].deviceDomain<<",";
+		        prtemp <<bpList[i].deviceID <<","<<bpList[i].timeOfMeasurement<<","<< bpList[i].systolicPressure;
+			prtemp <<","<<bpList[i].diastolicPressure<<","<<bpList[i].pulseRatePerMinute;
+			client->send(test.encode_message("server",prtemp.str().c_str()));
+			
+			prtemp.str("");
+			}
+	  	}
+		status = bpReader->return_loan(bpList, infoSeq);
+       		checkStatus(status, "return_loan");
+
+	}	
+	simpledds->deleteReader(reader);
+        delete simpledds;
+	std::cout << "message from client " << client << ": " << msg << std::endl;
+	}
+
+	if (!strcmp(msg.c_str(),"pulseox"))
+	{
+		std::stringstream prtemp;
+		SimpleDDS *simpledds;
+		PulseOximeterTypeSupport_var typesupport;
+	    	DataReader_ptr reader;
+	    	PulseOximeterDataReader_var bpReader;
+	    	ReturnCode_t status;
+		int i=0;
+	        DDS::TopicQos tQos;
+	        tQos.durability.kind=VOLATILE_DURABILITY_QOS;
+	        tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
+	        tQos.history.depth=10;
+	        tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
+	        tQos.durability_service.history_depth= 1024;
+	        simpledds = new SimpleDDS(tQos);
+		typesupport = new PulseOximeterTypeSupport();
+	    	reader = simpledds->subscribe(typesupport);
+	    	bpReader = PulseOximeterDataReader::_narrow(reader);
+	   	PulseOximeterSeq  bpList;
+	     	SampleInfoSeq     infoSeq;
+		while (1) 
+		{
+	         	status = bpReader->take(
+	            	bpList,
+	            	infoSeq,
+	            	LENGTH_UNLIMITED,
+	            	ANY_SAMPLE_STATE,
+	           	ANY_VIEW_STATE,
+	            	ANY_INSTANCE_STATE);
+	         	checkStatus(status, "take");
+	          	if (status == RETCODE_NO_DATA) 
+			{
+	          		continue;
+	          	}
+	          	for (i = 0; i < bpList.length(); i++) 
+		  	{
+				if(infoSeq[i].valid_data)
+				{
+					prtemp <<bpList[i].deviceDomain<<",";
+				        prtemp <<bpList[i].deviceID <<","<<bpList[i].timeOfMeasurement<<",";
+					prtemp <<bpList[i].SPO2<<","<<bpList[i].pulseRatePerMinute;
+					client->send(test.encode_message("server",prtemp.str().c_str()));	
+					prtemp.str("");
+				
+				}
+				sleep(1);
+			}
+			status = bpReader->return_loan(bpList, infoSeq);
+	        	checkStatus(status, "return_loan");
+		
+	  	}
+   	     simpledds->deleteReader(reader);
+             delete simpledds;
+
+	}
+	if (!strcmp(msg.c_str(),"temp"))
+	{
+		std::stringstream prtemp;
+	 	
+		SimpleDDS *simpledds;
+		TemperatureTypeSupport_var typesupport;
+		DataReader_ptr reader;
+		TemperatureDataReader_var bpReader;
+    	 	ReturnCode_t status;
+	 	int i=0;
+	       	DDS::TopicQos tQos;
+         	tQos.durability.kind=VOLATILE_DURABILITY_QOS;
+         	tQos.reliability.kind=BEST_EFFORT_RELIABILITY_QOS;
+         	tQos.history.depth=10;
+         	tQos.durability_service.history_kind = KEEP_LAST_HISTORY_QOS;
+         	tQos.durability_service.history_depth= 1024;
+         	simpledds = new SimpleDDS(tQos);
+	
+		typesupport = new TemperatureTypeSupport();
+    	 	reader = simpledds->subscribe(typesupport);
+    	 	bpReader = TemperatureDataReader::_narrow(reader);
+   	 	TemperatureSeq  bpList;
+     	 	SampleInfoSeq     infoSeq;
+	 	while (1) 
+	 	{
+         		status = bpReader->take(
+         	   	bpList,
+         	   	infoSeq,
+         	   	LENGTH_UNLIMITED,
+         	   	ANY_SAMPLE_STATE,
+         	  	ANY_VIEW_STATE,
+         	   	ANY_INSTANCE_STATE);
+         		checkStatus(status, "take");
+         	 	if (status == RETCODE_NO_DATA) 
+			{
+         	 		continue;
+         	 	}
+         	 	for (i = 0; i < bpList.length(); i++) 
+	 	 	{
+
+				if(infoSeq[i].valid_data)
+				{
+					prtemp <<bpList[i].deviceDomain<<",";
+				        prtemp <<bpList[i].deviceID <<","<<bpList[i].timeOfMeasurement<<",";
+					prtemp <<bpList[i].temp;
+					client->send(test.encode_message("server",prtemp.str().c_str()));
+					prtemp.str("");
+				}
+				sleep(1);
+				
+	
+			}
+			status = bpReader->return_loan(bpList, infoSeq);
+       			checkStatus(status, "return_loan");
+		
+		}
+		simpledds->deleteReader(reader);
+       		delete simpledds;
+	}	
+	if (!strcmp(msg.c_str(),"ecg"))
+	{
+		std::stringstream prtemp;
+	 	
+		SimpleDDS *simpledds;
+	 	ECGTypeSupport_var typesupport;
+    	 	DataReader_ptr reader;
+    	 	ECGDataReader_var ecgReader;
+    	 	ReturnCode_t status;
+	 	int i=0;
+	
+	 	/*Initializing Subscriber and DataWriter*/
+         	simpledds = new SimpleDDS();
+	 	typesupport = new ECGTypeSupport();
+	
+		reader = simpledds->subscribe(typesupport);
+    	 	ecgReader = ECGDataReader::_narrow(reader);
+   	 	ECGSeq  ecgList;
+     	 	SampleInfoSeq     infoSeq;
+		long m_count=0;
+	 	while (1) 
+		{
+         		status = ecgReader->take(
+            		ecgList,
+            		infoSeq,
+            		LENGTH_UNLIMITED,
+            		ANY_SAMPLE_STATE,
+           		ANY_VIEW_STATE,
+            		ANY_INSTANCE_STATE);
+         		checkStatus(status, "take");
+          		if (status == RETCODE_NO_DATA) 
+			{
+          			continue;
+          		}
+          		for (i = 0; i < ecgList.length(); i++) 
+	  		{
+				if(infoSeq[i].valid_data)
+				{
+					prtemp <<ecgList[i].deviceDomain<<",";
+		        		prtemp <<ecgList[i].deviceID <<","<<ecgList[i].timeOfMeasurement<<","<< ecgList[i].timeInSeconds;
+					prtemp <<","<<ecgList[i].amplitudeMillivolts<<","<<ecgList[i].waveformPeak;
+					client->send(test.encode_message("server",prtemp.str().c_str()));
+					//cout << prtemp.str().c_str()<< "\n"<<m_count++<<"\n";
+					prtemp.str("");
+									
+				}
+		  	}
+			status = ecgReader->return_loan(ecgList, infoSeq);
+	       		checkStatus(status, "return_loan");
+       
+    		}
+		simpledds->deleteReader(reader);
+       		delete simpledds;
+	}
+
+	if (msg[0] == '/') {
+		client->send(test.encode_message("server","unrecognized command"));
+	}
 	test.send_to_all(test.encode_message(test.m_connections[client],msg));
 	
     pthread_exit(NULL);

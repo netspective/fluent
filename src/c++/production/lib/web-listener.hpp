@@ -23,7 +23,7 @@ public:
         pthread_t id;
 	pthread_t stopid;
 	pthread_t listid;
-		pthread_t notifyid;
+	pthread_t notifyid;
 	//std::string name_topics[100];
 	std::string name_topics;
 
@@ -62,6 +62,7 @@ private:
 	static void *startNotifyThread(void *arg);
 	static void *startTopicsThread(void *arg);
 	static void *stopPublisher(void *arg);
+	static void *startPublisher(void *arg);
 	static void *startThread(void *arg);
 	// list of outstanding connections
 	std::map<websocketpp::session_ptr,std::string> m_connections;
