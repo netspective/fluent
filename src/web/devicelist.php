@@ -74,7 +74,7 @@ include "config.php"
 			<thead>
 			<tr>
 		<th colspan="2" style="background:none; border:none;color:black;">SEARCH BY DOMIAN 
-                    <input onkeyup="Table.filteR(this,this)" name="filter" class=search  size="6"><br><br></th>
+                    <input onkeyup="Table.filter(this,this)" name="filter" class=search  size="6"><br><br></th>
 			<th colspan="2" style="background:none; border:none;color:black;"><strong>SEARCH BY DEVICE </strong>
 			<input onkeyup="Table.filter(this,this)" size="6"name="filter" class=search><br><br></th>
 		</tr>						
@@ -91,72 +91,71 @@ include "config.php"
 		<tr>
                 	<td align="center"><strong><a href="bp.php">BP</a></strong></td>
 			<td><a href="bp.php?device_id=BP001">BP001</a></td>
-			<td><div id="BP001"><input type="button" title="Click here to start the device" value="START" id="startBt" />  <input id="stopBt" 				type="button" value="STOP" disabled /> <input type="hidden" id="BP001_text" value="BP" name="BP001_text" /></div></td>
+			<td><div id="BP001"><input type="button" title="Click here to start the device" value="START" id="startBt" />  <input id="stopBt" type="button" value="STOP" disabled /> <input type="hidden" id="BP001_text" value="BP" name="BP001_text" /></div></td>
 			<td><span id="BP001_result" class="stop"></span></td>
 		</tr>
 
 		<tr>
                       	<td align="center"><strong><a href="bp.php">BP</a></strong></td>
 			<td><a href="bp.php?device_id=BP002">BP002</a></td>
-			<td><div id="BP002"><input type="button" value="START" title="Click here to start the device" id="startBt" />  <input id="stopBt" 				type="button" value="STOP" disabled /><input type="hidden" id="BP002_text" value="BP" name="BP002_text" /></div></td>
+			<td><div id="BP002"><input type="button" value="START" title="Click here to start the device" id="startBt" />  <input id="stopBt" type="button" value="STOP" disabled /><input type="hidden" id="BP002_text" value="BP" name="BP002_text" /></div></td>
 			<td><span id="BP002_result" class="stop"></span></td>
 		</tr>
 
 		<tr>
                             	<td align="center"><strong><a href="bp.php">BP</a></strong></td>
 				<td><a href="bp.php?device_id=BP003">BP003</a></td>
-				<td><div id="BP003"><input type="button" value="START" title="Click here to start the device" id="startBt" />  					<input id="stopBt" type="button" value="STOP" disabled /><input type="hidden" id="BP003_text" value="BP" 					name="BP003_text" /></div></td>
+				<td><div id="BP003"><input type="button" value="START" title="Click here to start the device" id="startBt" />  	<input id="stopBt" type="button" value="STOP" disabled /><input type="hidden" id="BP003_text" value="BP" name="BP003_text" /></div></td>
 				<td><span id="BP003_result" class="stop"></span></td>
 		</tr>
 
 		<tr>
                             	<td align="center"><strong><a href="pulseox.php">PULSEOX</a></strong></td>
 				<td><a href="pulseox.php?device_id=PULSE001">PULSE001</a></td>
-				<td><div id="PULSE001"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input 					type="button" value="STOP" id="stopBt"  disabled /><input type="hidden" id="PULSE001_text" value="PULSEOX" 					name="PULSE001_text" /></div></td>
+				<td><div id="PULSE001"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input type="button" value="STOP" id="stopBt"  disabled /><input type="hidden" id="PULSE001_text" value="PULSEOX" name="PULSE001_text" /></div></td>
 				<td><span id="PULSE001_result" class="stop"></span></td>
 		</tr>
 		<tr>
                            	<td align="center"><strong><a href="pulseox.php">PULSEOX</a></strong></td>
 				<td><a href="pulseox.php?device_id=PULSE002">PULSE002</a></td>
-				<td><div id="PULSE002"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input 					type="button" value="STOP" id="stopBt"  disabled /></div></td><input type="hidden" id="PULSE002_text" value="PULSEOX" 					name="PULSE002_text" /></div></td>
+				<td><div id="PULSE002"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input type="button" value="STOP" id="stopBt"  disabled /><input type="hidden" id="PULSE002_text" value="PULSEOX" name="PULSE002_text" /></div></td>
 				<td><span id="PULSE002_result" class="stop"></span></td>
                                 </tr>
 				
 		<tr>
 		               	<td align="center"><strong><a href="pulseox.php">PULSEOX</a></strong></td>
 				<td><a href="pulseox.php?device_id=PULSE003">PULSE003</a></td>
-				<td><div id="PULSE003"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input 					type="button" value="STOP" id="stopBt" disabled /></div></td>
+				<td><div id="PULSE003"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input type="button" value="STOP" id="stopBt" disabled /><input type="hidden" id="PULSE003_text" value="PULSEOX" name="PULSE003_text" /></div></td>
 				<td><span id="PULSE003_result" class="stop"></span></td>
 		</tr>
 		<tr>
                             <td align="center"><strong><a href="temp.php">TEMPERATURE</a></strong></td>
 		           <td><a href="temp.php?device_id=TEMP111">TEMP111</a></td>
-			  <td><div id="TEMP111"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input 					type="button" value="STOP" id="stopBt" disabled /></div></td><input type="hidden" id="TEMP111_text" value="TEMPERATURE" 				name="TEMP111_text" /></div></td>
+			  <td><div id="TEMP111"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input type="button" value="STOP" id="stopBt" disabled /><input type="hidden" id="TEMP111_text" value="TEMPERATURE" name="TEMP111_text" /></div></td>
 			 <td><span id="TEMP111_result" class="stop"></span></td></tr>
                         <td align="center"><strong><a href="temp.php">TEMPERATURE</a></strong></td>
 			<td><a href="temp.php?device_id=TEMP123">TEMP123</a></td>
-			<td><div id="TEMP123"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input 				type="button" value="STOP" id="stopBt" disabled /></div></td><input type="hidden" id="TEMP123_text" value="TEMPERATURE" 			name="TEMP123_text" /></div></td>
+			<td><div id="TEMP123"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input type="button" value="STOP" id="stopBt" disabled /></div></td><input type="hidden" id="TEMP123_text" value="TEMPERATURE" name="TEMP123_text" /></div></td>
 			<td><span id="TEMP123_result" class="stop"></span></td></td>
                </tr>
 		<tr>
-                 	<td> align="center"><strong><a href="temp.php">TEMPERATURE</a></strong></td>
+                 	<td align="center"><strong><a href="temp.php">TEMPERATURE</a></strong></td>
 			<td><a href="temp.php?device_id=TEMP110">TEMP110</a></td>
-			<td><div id="TEMP110"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input 				type="button" value="STOP" id="stopBt" disabled /></div></td><input type="hidden" id="TEMP110_text" value="TEMPERATURE" 			name="TEMP110_text" /></div></td>
+			<td><div id="TEMP110"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input type="button" value="STOP" id="stopBt" disabled /></div></td><input type="hidden" id="TEMP110_text" value="TEMPERATURE" name="TEMP110_text" /></div></td>
 			<td><span id="TEMP110_result" class="stop"></span></td></td>
               </tr>
  		<tr>
  	        	<td align="center"><strong><a href="ecg.php">ECG</a></strong></td>
  	 		<td><a href="ecg.php?device_id=ECG112">ECG112</a></td>
-			<td><div id="ECG112"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input 			type="button" value="STOP" id="stopBt" disabled /></div></td><input type="hidden" id="ECG112_text" value="ECG" 
-			name="ECG112_text" /></div></td>
+			<td><div id="ECG112"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input type="button" value="STOP" id="stopBt" disabled /></div></td><input type="hidden" id="ECG112_text" value="ECG" name="ECG112_text" /></div></td>
 	               <td><span id="ECG112_result" class="stop"></span></td></td>
                 </tr>
 		
 		<tr>
-                            	<td align="center"><strong><a href="ecg.php">ECG</a></strong></td>
-				<td><a href="ecg.php?device_id=ECG109">ECG109</a></td>
-				<td><div id="ECG109"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input 				type="button" value="STOP" id="stopBt" disabled /></div></td><input type="hidden" id="ECG109_text" value="ECG"  				name="ECG109_text" /></div></td>
-                                <td><span id="ECG109_result" class="stop"></span></td></tr>
+                        <td align="center"><strong><a href="ecg.php">ECG</a></strong></td>
+			<td><a href="ecg.php?device_id=ECG109">ECG109</a></td>
+			<td><div id="ECG109"><input type="button" value="START" title="Click here to start the device" id="startBt" />   <input type="button" value="STOP" id="stopBt" disabled /></div></td><input type="hidden" id="ECG109_text" value="ECG"  name="ECG109_text" /></div></td>
+                        <td><span id="ECG109_result" class="stop"></span></td></tr>
 		</tbody>
 		</table>
 </br></br>
@@ -182,11 +181,10 @@ $('input#startBt').click(function() {
 	
 var sel_id = $(this).parent().attr('id');
 var device = $('#'+sel_id+"_text").val();
-//alert(device+":"+sel_id);
+
 send(device+":"+sel_id);
 			$('#'+ sel_id +' #startBt').attr("disabled","disabled");
 			$('#'+ sel_id +' #stopBt').removeAttr('disabled');
-//$('#'+ sel_id +'_result').removeClass("stop").addClass("start").html('Started');
 });
 
 $('input#stopBt').click(function() {
@@ -197,7 +195,6 @@ var device = $('#'+sel_id+"_text").val();
 send_stop(device+":"+sel_id);
 			$('#'+ sel_id +' #startBt').removeAttr('disabled');
 			$('#'+ sel_id +' #stopBt').attr("disabled","disabled");
-//$('#'+ sel_id +'_result').removeClass("start").addClass("stop").html('Stopped');
 });
 });
 
@@ -304,26 +301,19 @@ function chat_message(message,sender) {
 function chat_message2(message,sender) 
 {
 
-	if(message!="DLIST")
-	{
-	var devices=message;
-
-	
-	}
-
-var device_dynamic = "";
+	var device_dynamic = "";
 	var d1 = devices.split(';');
-var d2 = new Array();
+	var d2 = new Array();
 	for(var i=0; i<d1.length; i++) {
 
-device_dynamic += d1[i]+",";
-	}
-//alert(device_dynamic);	
-device_list = device_dynamic.split(',');
+	device_dynamic += d1[i]+",";
+ }
+	
+	device_list = device_dynamic.split(',');
 
 	checkdata();
 
-	if (arguments.length == 1) 
+   if (arguments.length == 1) 
 	{
 		sender = "";
 	}
