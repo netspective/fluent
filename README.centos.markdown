@@ -555,9 +555,9 @@ Available options  are:
     
 Example:
     
-       $ ./bp-pub --data-gen-ip 127.0.0.1 --data-gen-port 5000 --domain blood --device-id BP_LAB3 --log-info blood.info --log-data blood.data --log4cpp-conf ../src/c++/production/conf/simulation_log_bp.conf
-
-  * Once the publisher binds with the data generator and send a command, it receives data from data-generator and displays the data in the log files.
+        $ ./bp-pub --data-gen-ip 127.0.0.1 --data-gen-port 5000 --domain bp --device-id BP_LAB121 --log-info bp.info --log-data bp.data --log4cpp-conf ../src/c++/production/conf/simulation_log_bp.conf
+  
+* Once the publisher binds with the data generator and send a command, it receives data from data-generator and displays the data in the log files.
 
 **NOTE : The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format**
 
@@ -577,7 +577,7 @@ Available Options are:
 
 EXAMPLE:
        
-       $ ./bp-pub.sh --domain=blood --device-id=BP --spawn=5 --log4cpp-conf ../src/c++/production/conf/simulation_log_bp.conf
+       $ ./bp-pub.sh --domain=bp --device-id=BP --spawn=5 --log4cpp-conf ../src/c++/production/conf/simulation_log_bp.conf
 
 **NOTE :The  arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.**
 
@@ -595,21 +595,21 @@ Available options are:
 
         --log-info arg          Log information category
 
-        --lod-data arg   	      Log data category
+        --lod-data arg          Log data category
 
         --log4cpp-conf arg      Log configuration and format specification file
 
 Example:
 
-       $ ./bp-sub-echo --domain blood --device-id BP_LAB3 --log-info blood.info --log-data blood.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_bp_sub.conf         
-      
+       $ ./bp-sub-echo --domain bp --device-id BP_LAB121 --log-info bp.info --log-data bp.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_bp_sub.conf
+    
   * Once the blood pressure subscriber is started it will retrieve data from the Topic. Subscriber uses ContentFilterTopic to retrieve messages based on the Device ID from a single topic.
   
 **NOTE: The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.**
 
 **3.3**. Start the **blood pressure alarm** on the other terminal by passing the various options suffix to the command. 
 
-       $ ./bp-sub-alarm 
+       $ ./bp-sub-alarm --
 
 Available options are:
   
@@ -639,15 +639,15 @@ Available options are:
 
 Example :
 
-       $ ./bp-sub-alarm --domain blood --device-id BP_LAB3 --log-info blood.info --log-data blood.alarm --log4cpp-conf ../src/c++/production/conf/simulation_log_bp_sub.conf
-
-  * Once the blood pressure alarm is started it will retrieve the data and the displays in log file based on the default assessment or from the specified arguments.
+       $ ./bp-sub-alarm --domain bp --device-id BP_LAB121 --log-info bp.info --log-data bp.alarm --log4cpp-conf ../src/c++/production/conf/simulation_log_bp_sub.conf
+  
+* Once the blood pressure alarm is started it will retrieve the data and the displays in log file based on the default assessment or from the specified arguments.
 
 **NOTE : The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.**
 
 **3.4**. Start the **blood pressure persists** in the other terminal by passing the various options suffix to the command. 
 
-       $ ./bp-sub-persist 
+       $ ./bp-sub-persist --
 
 Available options are:
 
@@ -669,7 +669,7 @@ Available options are:
 
 Example
   
-       $ ./bp-sub-persist --domain blood --device-id BP_LAB3 --log-info blood.info --log-data blood.persist --log4cpp-conf ../src/c++/production/conf/simulation_log_bp_sub.conf
+         $ ./bp-sub-persist --domain bp --device-id BP_LAB121 --log-info bp.info --log-data bp.persist --log4cpp-conf ../src/c++/production/conf/simulation_log_bp_sub.conf --host 172.16.1.91 --database EMR
 
   * Once the blood pressure persistence is started it  will update the data in to the data base and displays the data in the log file.
 
@@ -679,7 +679,7 @@ Example
 
 **4.1. PulseoxMeter publisher** shall be started by passing the various options suffix to the command .
 
-        $ ./pulseox-pub 
+        $ ./pulseox-pub --
 
 Available options are:
 
@@ -701,7 +701,7 @@ Available options are:
 
 Example :
 
-       $ ./pulseox-pub --data-gen-ip 127.0.0.1 --data-gen-port 5000 --domain pulse --device-id PULSE_LAB3 --log-info pulse.info --log-data pulse.data --log4cpp-conf ../src/c++/production/conf/simulation_log_pulse.conf
+        $ ./pulseox-pub --data-gen-ip 172.16.1.91 --data-gen-port 5000 --domain pulse --device-id PULSE_LAB31 --log-info pulse.info --log-data pulse.data --log4cpp-conf ../src/c++/production/conf/simulation_log_pulse.conf
 
   * Once the publisher binds with the data generator and send a command, it receives data from data-generator and displays the data in the log files.
 
@@ -709,7 +709,7 @@ Example :
 
 **4.1.1. Multiple publishers** need to publish the data on the topic use the following command with the options
 
-       $ ./pulseox-pub.sh --
+        $ ./pulseox-pub.sh --
 
 Available Options are:
 
@@ -723,13 +723,13 @@ Available Options are:
 
 EXAMPLE:
        
-       $ ./pulse-oximeter-pub.sh --domain=pulse --device-id=Pulse --spawn=5 --log4cpp-conf ../src/c++/production/conf/simulation_log_bp.conf
+       $ ./pulseox-pub.sh --domain=pulse --device-id=PULSE --spawn=5 --log4cpp-conf ../src/c++/production/conf/simulation_log_pulse.conf
 
 **NOTE :The arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format**
 
 **4.2.** Start the **pulseox meter subscribers** on the other terminal using by passing various options suffix to the command,
 
-       $ ./pulseox-sub-echo -
+       $ ./pulseox-sub-echo --
 
 Available options are:
 
@@ -747,7 +747,7 @@ Available options are:
 
 Example:
 
-      $ ./pulse-sub-echo --domain pulse --device-id Pulse_LAB3 --log-info pulse.info --log-data pulse.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_pulse_sub.conf     
+      $ ./pulseox-sub-echo --domain pulse --device-id PULSE_LAB31 --log-info pulse.info --log-data pulse.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_pulse_sub.conf
 
   * Once the pulse oximeter subscriber is started it will retrieve data from the Topic. Subscriber uses ContentFilterTopic to retrieve messages based on the Device ID from a single topic.
 
@@ -777,7 +777,7 @@ Available options are:
 
 Example:
 
-       $ ./pulseox-sub-alarm --domain pulse --device-id PULSE_LAB3 --log-info pulse.info --log-data pulse.alarm --log4cpp-conf ../src/c++/production/conf/simulation_log_pulse_sub.conf
+        $ ./pulseox-sub-alarm --domain pulse --device-id PULSE_LAB31 --log-info pulse.info --log-data pulse.alarm --log4cpp-conf ../src/c++/production/conf/simulation_log_pulse_sub.conf
 
   * Once the pulse oximeter alarm is started will retrieve the data and the displays in log file based on the default assessment or from the specified arguments.
 
@@ -807,7 +807,7 @@ Available options are:
 
 Example:
  
-       $ ./pulseox-sub-persist --domain pulse --device-id PULSE_LAB3 --log-info pulse.info --log-data pulse.persist --log4cpp-conf ../src/c++/production/conf/simulation_log_pulse_sub.conf
+       $ ./pulseox-sub-persist --domain pulse --device-id PULSE_LAB31 --log-info pulse.info --log-data pulse.persist --log4cpp-conf ../src/c++/production/conf/simulation_log_pulse_sub.conf --host 172.16.1.91 --database EMR
   
   * Once the pulse oximeter persistence is started it will update the data in to the database and displays the data in the log file.
 
@@ -817,7 +817,7 @@ Example:
 
 **5.1. Temperature monitor** publisher shall be started by passing the various options suffix to the command
 
-       $ ./temperature-pub --
+      $ ./temperature-pub --
 
 Available options are:
   
@@ -839,7 +839,7 @@ Available options are:
 
 Example :
 
-       $ ./temperature-pub --data-gen-ip 127.0.0.1 --data-gen-port 5000 --domain temp --device-id TEMP_LAB3 --log-info temp.info --log-data temp.data --log4cpp-conf ../src/c++/production/conf/simulation_log_temp.conf/simulation_log_temp.conf
+       $ ./temperature-pub --data-gen-ip 172.16.1.91 --data-gen-port 5000 --domain temp --device-id TEMP_LAB33 --log-info temp.info --log-data temp.data --log4cpp-conf ../src/c++/production/conf/simulation_log_temp.conf
 
   * Once the publisher binds with the data generator and send a command, it receives data from data-generator and displays the data in the log files.
 
@@ -861,13 +861,13 @@ Available options are:
 
 EXAMPLE:
        
-        $ ./temperature-pub.sh --domain=blood --device-id=BP --spawn=5 --log4cpp-conf ../src/c++/production/conf/simulation_log_bp.conf
+        $ ./temperature-pub.sh --domain=temp --device-id=TEMP --spawn=5 --log4cpp-conf ../src/c++/production/conf/simulation_log_temp.conf
     
 **NOTE : The arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format**
 
 **5.2.** Start the **temperature-monitor subscribers** on the other terminal by passing the various options suffix to the command ,
 
-        $ ./tempmerature-sub-echo
+        $ ./tempmerature-sub-echo --
 
 Available options are:
 
@@ -885,7 +885,7 @@ Available options are:
 
 Example:
 
-       $ ./temperature-sub-echo --domain temp --device-id Temp_LAB123 --log-info temp.info --log-data temp.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_temp_sub.conf  
+       $ ./temperature-sub-echo --domain temp --device-id TEMP_LAB33 --log-info temp.info --log-data temp.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_temp_sub.conf
 
   * Once the temp subscriber is started it will retrieve data from the Topic. Subscriber uses ContentFilterTopic to retrieve messages based on the Device ID from a single topic.
 
@@ -893,7 +893,7 @@ Example:
 
 **5.3.**  Start the **temperature-monitor alarm** by passing the various options suffix to the command ,
 
-       $ ./tempmerature-sub-alarm
+       $ ./tempmerature-sub-alarm --
 
 Available options are:
 
@@ -917,7 +917,7 @@ Available options are:
 
 Example:
 
-       $ ./temperature-sub-alarm --domain pulse --device-id TEMP_LAB3 --log-info temp.info --log-data temp.alarm --log4cpp-conf ../src/c++/production/conf/simulation_log_temp_sub.conf
+       $ ./temperature-sub-alarm --domain temp --device-id TEMP_LAB33 --log-info temp.info --log-data temp.alarm --log4cpp-conf ../src/c++/production/conf/simulation_log_temp_sub.conf
 
   * Once the pulse oximeter alarm is started it will retrieve the data and the displays in log file based on the default assessment or from the specified arguments.
 
@@ -925,7 +925,7 @@ Example:
 
 **5.4.** Start the **temperature-monitor persists** by passing the various options suffix to the command,
 
-       $ ./temperature-sub-persist 
+       $ ./temperature-sub-persist --
 
 Available options are:
 
@@ -947,9 +947,9 @@ Available options are:
 
 Example:
 
-       $ ./temperature-sub-persist --domain pulse --device-id TEMP_LAB3 --log-info temp.info --log-data temp.persist --log4cpp-conf ../src/c++/production/conf/simulation_log_temp_sub.conf
+      $ ./temperature-sub-persist --domain temp --device-id TEMP_LAB33 --log-info temp.info --log-data temp.persist --log4cpp-conf ../src/c++/production/conf/simulation_log_temp_sub.conf --host 172.16.1.91 --database EMR
 
-  * Once the temperature monitor persists is started it will update the data in to the database and displays the data in the log file.
+* Once the temperature monitor persists is started it will update the data in to the database and displays the data in the log file.
 
 **NOTE : The category name arguments passed to the application needs to be configured in the log4cpp configuration file with the appender and layout format.**
 
@@ -979,7 +979,7 @@ Available options are:
 
 Example :
 
-       $ ./ecg-pub --data-gen-ip 127.0.0.1 --data-gen-port 5000 --domain ECG --device-id ECG_LAB44 --log-info ecg.info --log-data ecg.data --log4cpp-conf ../src/c++/production/conf/simulation_log_ecg.conf 
+        $ ./ecg-pub --data-gen-ip 172.16.1.91 --data-gen-port 5000 --domain ECG --device-id ECG_LAB44 --log-info ecg.info --log-data ecg.data --log4cpp-conf ../src/c++/production/conf/simulation_log_ecg.conf 
 
 * Once the publisher binds with the data generator and send a command, it receives data from data-generator and displays the data in the log files.
 
@@ -987,7 +987,7 @@ Example :
 
 **6.2.** Start the **ecg subscribers** on the other terminal by passing the various options suffix to the command ,
 
-       $ ./ecg-sub-echo
+       $ ./ecg-sub-echo --
 
 Available options are:
 
@@ -1005,7 +1005,7 @@ Available options are:
 
 Example:
 
-       $ ./ecg-sub-echo --domain ECG --device-id ECG_LAB44 --log-info ecg.info --log-data ecg.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_ecg_sub.conf
+      $ ./ecg-sub-echo --domain ECG --device-id ECG_LAB44 --log-info ecg.info --log-data ecg.echo --log4cpp-conf ../src/c++/production/conf/simulation_log_ecg_sub.conf
   
 * Once the ecg subscriber is started it will retrieve data from the ContentFilterTopic to retrieve messages based on the Device ID from a single topic.
 
