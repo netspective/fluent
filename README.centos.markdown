@@ -1050,6 +1050,161 @@ Example:
 
 **8.** The process of all the entities will remain the same as single machine implementation and the extension is it has been distributed with few configurations.
      
+<h5>STARTUP SCRIPTS</h5>
+
+* The following script files are should be under the system configuration directory /etc/init.d/,
+
+<h6>MONGODB :</h6>
+
+          #!/bin/bash
+          #DESCRIPTION:MONGODB STARTUP SCRIPT
+          
+          PROGRAM=/opt/mongodb-linux-x86_64-2.0.2/bin/mongod
+          MONGOPID=`ps -ef | grep 'mongod' | grep -v grep | awk '{print $2}'`
+           case "$1" in
+          
+          start)
+           echo "Starting MongoDB server"
+           /opt/mongodb-linux-x86_64-2.0.2/bin/mongod --fork --quiet --dbpath /data/db  --logpath /var/log/mongodb.log
+           echo "Started MongoDB Server\n"
+          ;;
+          
+          stop)
+           echo "Stopping MongoDB server"
+           if [ ! -z "$MONGOPID" ]; then
+           kill -9 $MONGOPID 
+           fi
+          ;;
+          *)
+          echo "Usage: /etc/init.d/mongodb {start|stop}"
+          exit 1
+          esac
+          exit 0
+          
+* Start the script using the following commands. 
+
+          $ /etc/init.d/<service name>{start/stop}
+Example:
+
+          $ /etc/init.d/mongodb{start/stop}
+ 
+<h6>Elastic Search:</h6>
+
+          #!/bin/bash
+          #DESCRIPTION:ELASTICSEARCH STARTUP SCRIPT
+          ES_HOME=/opt/elasticsearch-0.18.6
+          ES_MIN_MEM=256m
+          ES_MAX_MEM=2g
+          DAEMON=$ES_HOME/bin/service/elasticsearch
+          NAME=elasticsearch
+          CONFIG_FILE=/opt/elasticsearch-0.18.6/config/elasticsearch.yml
+          case "$1"  in
+         
+          start)
+           $DAEMON start
+           echo "Elasticsearch Started "
+           ;;
+          stop)
+           $DAEMON stop
+           echo "Elasticsearch Stopped "
+           ;;
+           *)
+          N=/etc/init.d/$NAME
+          echo "Usage: $N {start|stop}" >&2
+          exit 1
+          ;;
+          esac
+          exit 0
+* Start the script using the following command, 
+
+          $ /etc/init.d/<service name>{start/stop}
+Example:
+        
+          $ /etc/init.d/elasticsearch {start/stop}
+ 
+          
+<h6> Graylog2-Server :</h6>
+
+         #!/bin/sh 
+         #DESCRIPTION:GRAYLOG SERVER STARTUP SCRIPT
+         CMD=$1
+         NOHUP=`which nohup`
+         JAVA_CMD=/usr/bin/java
+         GRAYLOG2_SERVER_HOME=/opt/graylog2-server-0.9.6
+       
+         start() {
+          echo "Starting graylog2-server ..."
+          $NOHUP $JAVA_CMD -jar $GRAYLOG2_SERVER_HOME/graylog2-server.jar -f $GRAYLOG2_SERVER_HOME/graylog2.conf &
+          echo "Graylog2-server Started"
+         }
+        
+        stop() {
+         PID=`cat /tmp/graylog2.pid`
+         echo "Stopping graylog2server $PID ..."
+         kill -9 $PID
+         echo "Graylog2-server Stopped $PID"
+        }
+        
+        case "$CMD" in
+         start)
+          start
+        ;;
+       
+        stop)
+         stop
+          ;;
+          *)
+        
+        echo "Usage $0 {start|stop}"
+        
+        RETVAL=1
+        
+        esac
+        
+* Start the script using the following command, 
+
+          $ /etc/init.d/<service name>{start/stop}
+Example:
+        
+        $ /etc/init.d/graylog-server {start/stop}
+ 
+<h6> Graylog-Web-Interface:</h6>       
+
+         #!/bin/bash 
+         
+         #DESCRIPTION:GRAYLOG@-WEB-INTERFACE STARTUP SCRIPT
+         
+         NPATH=/opt/netspective-webinterface
+         export PATH=$PATH:/usr/local/ruby/bin/
+         WEBID=`ps -ef | grep 'script/rails' | grep -v grep | awk '{print $2}'`
+         case "$1" in
+          start)
+           echo "Starting Web Interface"
+           cd $NPATH
+           $NPATH/script/rails server -e production &
+           echo "Started Graylog2-Web-Interface"
+           ;;
+          
+          stop)
+           echo "Stopping Web Interface"
+           if [ ! -z "$WEBID" ]; then
+           kill -9 $WEBID
+           echo "Stopped $WEBID"
+           fi
+           ;;
+            *)
+          echo "Usage: /etc/init.d/graylog-web {start|stop}"
+          exit 1
+          esac
+          exit 0
+
+* Start the script using the following command, 
+
+          $ /etc/init.d/<service name>{start/stop}
+Example:
+        
+          $ /etc/init.d/graylog-web {start/stop}
+ 
 <h6>TROUBLESHOOTING</h6>
 
 <h4>Log4cpp</h4>
@@ -1087,9 +1242,4 @@ Example:
         $ Replace INT32_MIN with 0 and INT32_MAX with 2147483647 
         
 
-
-
-
-
-
-
+          
